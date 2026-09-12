@@ -1,0 +1,37 @@
+{
+  "name": "agro-sathi",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A farmer-first crop check, weather and advisory website built with Vite and React.",
+  "scripts": {
+    "dev": "tsx server.ts",
+    "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
+    "start": "node dist/server.cjs",
+    "lint": "prettier --check client/src client/index.html vite.config.js",
+    "preview": "vite preview --host 0.0.0.0 --port 3000",
+    "format": "prettier --write client/src client/index.html vite.config.js README.md docs"
+  },
+  "dependencies": {
+    "@google/genai": "^2.22.0",
+    "@tailwindcss/vite": "^4.1.3",
+    "express": "^5.2.1",
+    "firebase": "^12.19.0",
+    "lucide-react": "^0.453.0",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1",
+    "recharts": "^3.10.1",
+    "tailwindcss": "^4.1.14",
+    "tw-animate-css": "^1.4.0",
+    "wouter": "^3.3.5"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.20.2",
+    "@vitejs/plugin-react": "^5.0.4",
+    "esbuild": "^0.28.2",
+    "prettier": "^3.6.2",
+    "tsx": "^4.23.13",
+    "vite": "^7.1.7"
+  }
+}
