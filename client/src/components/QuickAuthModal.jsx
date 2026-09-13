@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import {
   X,
@@ -38,6 +38,18 @@ export default function QuickAuthModal({
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+
+  useEffect(() => {
+    const handleKeyDown = e => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    if (isOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -138,7 +150,10 @@ export default function QuickAuthModal({
       <div className="quick-auth-card" onClick={e => e.stopPropagation()}>
         {/* Modal Header */}
         <div className="quick-auth-header">
-          <div className="quick-auth-brand-badge" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div
+            className="quick-auth-brand-badge"
+            style={{ display: "flex", alignItems: "center", gap: "10px" }}
+          >
             <div
               style={{
                 width: "38px",
@@ -153,7 +168,12 @@ export default function QuickAuthModal({
               <img
                 src="/agro-sathi-icon.png"
                 alt="AGRO SATHI"
-                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  display: "block",
+                }}
               />
             </div>
             <div>
