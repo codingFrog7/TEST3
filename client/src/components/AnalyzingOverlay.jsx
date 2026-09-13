@@ -51,8 +51,8 @@ export default function AnalyzingOverlay({
     },
     {
       id: 3,
-      label: "Connecting to Google AI & ICAR agronomy database",
-      hindi: "Google AI और कृषि अनुसंधान से सही समाधान खोजना...",
+      label: "Connecting to ICAR agronomy database",
+      hindi: "कृषि अनुसंधान से सही समाधान खोजना...",
     },
     {
       id: 4,
@@ -125,9 +125,6 @@ export default function AnalyzingOverlay({
           </div>
 
           <div>
-            <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white">
-              Checking your {crop} crop with Google AI...
-            </h3>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
               Analyzing discoloration, spots, and pest damage to give you simple
               remedies in your language.

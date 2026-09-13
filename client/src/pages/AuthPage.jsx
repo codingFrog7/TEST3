@@ -499,9 +499,13 @@ export default function AuthPage({ mode = "login" }) {
               <div className="auth-landscape-scrim" />
 
               {/* Floating Header Badge */}
-              <div className="auth-landscape-top-badge">
-                <span className="auth-glow-leaf">🌾</span>
-                <span>Agro Sathi Kisan Platform</span>
+              <div className="auth-landscape-top-badge" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <img
+                  src="/agro-sathi-icon.png"
+                  alt="AGRO SATHI"
+                  style={{ width: "20px", height: "20px", borderRadius: "5px" }}
+                />
+                <span>AGRO SATHI Kisan Platform</span>
               </div>
 
               {/* Bottom Editorial Card with Live Agri Cues */}

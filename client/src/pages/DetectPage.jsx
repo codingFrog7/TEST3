@@ -19,7 +19,8 @@ import {
 } from "lucide-react";
 import { useFirebase } from "../context/FirebaseContext.jsx";
 import { DISEASE_DATABASE } from "../data/diseaseDatabase.js";
-import AnalyzingOverlay from "../components/AnalyzingOverlay.jsx";
+import DiagnosisResultCard from "../components/DiagnosisResultCard.jsx";
+import { PYTHON_API_BASE } from "../lib/config.js";
 
 const CROPS = [
   { id: "Chilli", label: "Chilli", icon: "🌶️" },
@@ -57,6 +58,9 @@ export default function DetectPage() {
   const [isCameraStreaming, setIsCameraStreaming] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  // Python FastAPI Gemini Vision result
+  const [pythonResult, setPythonResult] = useState(null);
+  const [pythonLoading, setPythonLoading] = useState(false);
   const [lang, setLang] = useState("en");
 
   const fileRef = useRef(null);
@@ -133,8 +137,9 @@ export default function DetectPage() {
     const dataUrl = canvas.toDataURL("image/jpeg");
     stopLiveCamera();
     setPreview(dataUrl);
-    setFile({ name: `${crop.toLowerCase()}-live-scan.jpg` });
-    performDiagnosis(crop, dataUrl, `${crop.toLowerCase()}-live-scan.jpg`);
+    const snapName = crop ? `${crop.toLowerCase()}-live-scan.jpg` : "crop-live-scan.jpg";
+    setFile({ name: snapName });
+    performDiagnosis(crop, dataUrl, snapName);
   };
 
   const handleFile = nextFile => {
@@ -145,30 +150,106 @@ export default function DetectPage() {
     reader.onload = () => {
       const dataUrl = String(reader.result);
       setPreview(dataUrl);
-      performDiagnosis(crop, dataUrl, nextFile.name);
+      // Pass rawFile so Python handler can send real multipart
+      performDiagnosis(crop, dataUrl, nextFile.name, nextFile);
     };
     reader.readAsDataURL(nextFile);
   };
 
   const loadSample = (cropName, sampleObj) => {
-    setCrop(cropName);
+    const finalCrop = cropName || sampleObj.crop || "Chilli";
+    setCrop(finalCrop);
     setFile({ name: `${sampleObj.id || "sample"}.jpg` });
     setPreview(sampleObj.sampleImg || "");
-    performDiagnosis(
-      cropName,
-      sampleObj.sampleImg || "",
-      `${sampleObj.id || "sample"}.jpg`
-    );
+    setIsAnalyzing(true);
+    setBusy(true);
+    setResult(false);
+    setActiveDiagnosis(null);
+
+    // Realistic diagnostic response with complete verified agronomy data
+    setTimeout(() => {
+      setActiveDiagnosis({
+        ...sampleObj,
+        crop: finalCrop,
+        immediateAction:
+          sampleObj.immediateAction ||
+          sampleObj.culturalTips ||
+          "Inspect field bunds, isolate infected leaves, and prepare recommended spray immediately.",
+        localName: sampleObj.localName || sampleObj.hindiName || "",
+      });
+      setResult(true);
+      setIsAnalyzing(false);
+      setBusy(false);
+      setTimeout(() => {
+        resultRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 120);
+    }, 450);
+  };
+
+  // Send image to Python FastAPI /diagnose endpoint in parallel
+  const performPythonDiagnosis = async (imageBase64OrUrl, rawFile) => {
+    if (!imageBase64OrUrl) return;
+    setPythonLoading(true);
+    setPythonResult(null);
+    try {
+      let formData;
+      if (rawFile instanceof File) {
+        // Preferred: send the real File object as multipart
+        formData = new FormData();
+        formData.append("file", rawFile);
+      } else if (imageBase64OrUrl && imageBase64OrUrl.startsWith("data:")) {
+        // Fallback: convert base64 dataURL to a Blob
+        const [header, b64] = imageBase64OrUrl.split(",");
+        const mimeMatch = header.match(/:(.*?);/);
+        const mime = mimeMatch ? mimeMatch[1] : "image/jpeg";
+        const binary = atob(b64);
+        const arr = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
+        const blob = new Blob([arr], { type: mime });
+        formData = new FormData();
+        formData.append("file", blob, "crop-image.jpg");
+      } else {
+        return; // No image data to send
+      }
+
+      const res = await fetch(`${PYTHON_API_BASE}/diagnose`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        console.warn("Python diagnose failed:", errJson);
+        return;
+      }
+      const json = await res.json();
+      setPythonResult(json);
+    } catch (err) {
+      console.warn("Python backend unavailable (is uvicorn running?):", err.message);
+    } finally {
+      setPythonLoading(false);
+    }
   };
 
   const performDiagnosis = async (
-    cropName,
+    cropName = "",
     imageBase64OrUrl = "",
-    fileName = ""
+    fileName = "",
+    rawFile = null
   ) => {
     setIsAnalyzing(true);
     setBusy(true);
     setResult(false);
+    setActiveDiagnosis(null);
+    setPythonResult(null);
+
+    // Fire Python vision diagnosis in parallel (non-blocking)
+    if (imageBase64OrUrl) {
+      performPythonDiagnosis(imageBase64OrUrl, rawFile);
+    }
 
     try {
       const response = await fetch("/api/crop-doctor/analyze", {
@@ -180,25 +261,38 @@ export default function DetectPage() {
             imageBase64OrUrl && imageBase64OrUrl.startsWith("data:")
               ? imageBase64OrUrl
               : undefined,
-          fileName: fileName || `${cropName}-leaf.jpg`,
+          fileName: fileName || `${cropName || "crop"}-leaf.jpg`,
         }),
       });
 
       const data = await response.json();
       if (data && data.diagnosis) {
         setActiveDiagnosis(data.diagnosis);
+        if (data.diagnosis.crop) {
+          setCrop(data.diagnosis.crop);
+        }
         setResult(true);
       } else {
-        throw new Error("No diagnosis returned");
+        throw new Error("No diagnosis returned from API");
       }
     } catch (err) {
       console.warn("Using verified ICAR fallback diagnosis:", err);
-      const cropList = DISEASE_DATABASE[cropName] || DISEASE_DATABASE.Chilli;
+      const targetCrop = cropName || "Chilli";
+      const cropList = DISEASE_DATABASE[targetCrop] || DISEASE_DATABASE.Chilli;
       let match = cropList[0];
       if (fileName.includes("anthracnose") || fileName.includes("rot")) {
         match = cropList[1] || cropList[0];
       }
-      setActiveDiagnosis(match);
+      setActiveDiagnosis({
+        ...match,
+        crop: targetCrop,
+        immediateAction:
+          match.immediateAction ||
+          match.culturalTips ||
+          "Inspect field bunds, isolate infected leaves, and prepare recommended spray immediately.",
+        localName: match.localName || "",
+      });
+      setCrop(targetCrop);
       setResult(true);
     } finally {
       setIsAnalyzing(false);
@@ -219,10 +313,11 @@ export default function DetectPage() {
       setIsSpeaking(false);
       return;
     }
+    const currentCrop = activeDiagnosis.crop || crop || "Crop";
     const text =
       lang === "hi"
-        ? `${crop} की जांच: ${activeDiagnosis.localName || activeDiagnosis.name}। गंभीरता स्तर: ${activeDiagnosis.severity} में से 5। जैविक समाधान: ${activeDiagnosis.organicRemedy}। रासायनिक छिड़काव: ${activeDiagnosis.chemicalRemedy}। छिड़काव समय: ${activeDiagnosis.bestSprayTime}। पानी की मात्रा: ${activeDiagnosis.waterVolume}।`
-        : `Diagnosis for ${crop}: ${activeDiagnosis.name}. Severity level ${activeDiagnosis.severity} of 5. Recommended organic remedy: ${activeDiagnosis.organicRemedy}. Recommended target chemical spray: ${activeDiagnosis.chemicalRemedy}. Spray timing: ${activeDiagnosis.bestSprayTime}. Water volume: ${activeDiagnosis.waterVolume}.`;
+        ? `${currentCrop} की जांच: ${activeDiagnosis.hindiName || activeDiagnosis.localName || activeDiagnosis.name}। गंभीरता स्तर: ${activeDiagnosis.severity} में से 5। ${activeDiagnosis.hindiExplanation || ""} जैविक उपाय: ${activeDiagnosis.organicRemedy || ""}। रासायनिक छिड़काव: ${activeDiagnosis.chemicalRemedy || ""}। छिड़काव समय: ${activeDiagnosis.bestSprayTime || "सुबह"}। पानी की मात्रा: ${activeDiagnosis.waterVolume || "200 लीटर"}।`
+        : `Diagnosis for ${currentCrop}: ${activeDiagnosis.name}. Severity level ${activeDiagnosis.severity} of 5. ${activeDiagnosis.simpleExplanation || ""} Recommended organic remedy: ${activeDiagnosis.organicRemedy || ""}. Recommended target chemical spray: ${activeDiagnosis.chemicalRemedy || ""}. Spray timing: ${activeDiagnosis.bestSprayTime || "Early morning"}. Water volume: ${activeDiagnosis.waterVolume || "200 Litres per Acre"}.`;
 
     if (!window.speechSynthesis) return;
     const utterance = new SpeechSynthesisUtterance(text);
@@ -236,14 +331,15 @@ export default function DetectPage() {
 
   const copyDosage = () => {
     if (!activeDiagnosis) return;
-    const text = `🌱 Agro Sathi Prescription for ${crop}
-Disease: ${activeDiagnosis.name} (${activeDiagnosis.localName || activeDiagnosis.scientificName || ""})
+    const currentCrop = activeDiagnosis.crop || crop || "Crop";
+    const text = `🌱 Agro Sathi Prescription for ${currentCrop}
+Disease: ${activeDiagnosis.name} (${activeDiagnosis.localName || activeDiagnosis.hindiName || activeDiagnosis.scientificName || ""})
 Severity: Level ${activeDiagnosis.severity}/5 (${activeDiagnosis.severityLabel || ""})
 ⚡ Immediate Action: ${activeDiagnosis.immediateAction || "Inspect crop and apply treatment spray."}
-🌿 Organic Remedy: ${activeDiagnosis.organicRemedy}
-🧪 Chemical Spray: ${activeDiagnosis.chemicalRemedy}
-💧 Water Volume: ${activeDiagnosis.waterVolume}
-⏱️ Best Spray Time: ${activeDiagnosis.bestSprayTime}`;
+🌿 Organic Remedy: ${activeDiagnosis.organicRemedy || "Neem oil 3000 ppm spray"}
+🧪 Chemical Spray: ${activeDiagnosis.chemicalRemedy || "Consult local Krishi Vigyan Kendra"}
+💧 Water Volume: ${activeDiagnosis.waterVolume || "150-200 Litres / Acre"}
+⏱️ Best Spray Time: ${activeDiagnosis.bestSprayTime || "Early Morning"}`;
 
     navigator.clipboard.writeText(text).then(() => {
       setCopiedDosage(true);
@@ -254,11 +350,12 @@ Severity: Level ${activeDiagnosis.severity}/5 (${activeDiagnosis.severityLabel |
   const saveToFieldLog = async () => {
     if (!activeDiagnosis) return;
     try {
+      const currentCrop = activeDiagnosis.crop || crop || "Crop";
       await saveScoutRecord({
-        crop,
+        crop: currentCrop,
         disease: activeDiagnosis.name,
         scientific: activeDiagnosis.scientificName || "",
-        severity: activeDiagnosis.severity,
+        severity: activeDiagnosis.severity || 1,
         remedy:
           activeDiagnosis.organicRemedy || activeDiagnosis.chemicalRemedy || "",
       });
@@ -274,6 +371,7 @@ Severity: Level ${activeDiagnosis.severity}/5 (${activeDiagnosis.severityLabel |
     setPreview("");
     setResult(false);
     setActiveDiagnosis(null);
+    setPythonResult(null);
     if (window.speechSynthesis) window.speechSynthesis.cancel();
     setIsSpeaking(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -301,34 +399,32 @@ Severity: Level ${activeDiagnosis.severity}/5 (${activeDiagnosis.severityLabel |
       <div className="crop-doctor-shell">
         {/* Clean Header */}
         <div className="crop-doctor-header">
+          <div
+            className="crop-doctor-brand-pill"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "4px 12px 4px 6px",
+              borderRadius: "999px",
+              marginBottom: "10px",
+              boxShadow: "0 1px 4px rgba(0, 0, 0, 0.04)",
+            }}
+          >
+            <img
+              src="/agro-sathi-icon.png"
+              alt="AGRO SATHI"
+              style={{ width: "22px", height: "22px", borderRadius: "6px", display: "block" }}
+            />
+            <span style={{ fontSize: "12px", fontWeight: "800", color: "var(--foreground, #0f172a)", letterSpacing: "0.04em" }}>
+              AGRO SATHI
+            </span>
+          </div>
           <h1>AI Crop Doctor</h1>
           <p>
             Take or upload a photo of your crop leaf for instant disease
             diagnosis, organic remedies, and chemical spray guidance.
           </p>
-        </div>
-
-        {/* Quick Crop Selector Pills */}
-        <div className="crop-selector-wrap">
-          <span className="crop-selector-label">Select Crop</span>
-          <div className="crop-selector-pills">
-            {CROPS.map(c => (
-              <button
-                key={c.id}
-                type="button"
-                className={`crop-pill-btn ${crop === c.id ? "active" : ""}`}
-                onClick={() => {
-                  setCrop(c.id);
-                  if (preview) {
-                    performDiagnosis(c.id, preview, file?.name || "");
-                  }
-                }}
-              >
-                <span>{c.icon}</span>
-                <span>{c.label}</span>
-              </button>
-            ))}
-          </div>
         </div>
 
         {/* Central Scanner Card */}
@@ -369,7 +465,7 @@ Severity: Level ${activeDiagnosis.severity}/5 (${activeDiagnosis.severityLabel |
             <div className="scanner-preview-wrap">
               <div className="scanner-preview-img-box">
                 <img src={preview} alt="Crop leaf preview" />
-                <span className="scanner-preview-tag">{crop} Leaf Photo</span>
+                <span className="scanner-preview-tag">{crop ? `${crop} Leaf Photo` : "Crop Leaf Photo"}</span>
               </div>
               <div className="scanner-preview-actions">
                 <button
@@ -473,6 +569,42 @@ Severity: Level ${activeDiagnosis.severity}/5 (${activeDiagnosis.severityLabel |
               </div>
             </div>
           )}
+
+          {/* Real-time Inline Analyzing Banner */}
+          {isAnalyzing && (
+            <div
+              style={{
+                marginTop: "16px",
+                padding: "14px 18px",
+                borderRadius: "14px",
+                background: "rgba(16, 185, 129, 0.08)",
+                border: "1px solid rgba(16, 185, 129, 0.25)",
+                display: "flex",
+                alignItems: "center",
+                gap: "14px",
+              }}
+            >
+              <div
+                className="spinner"
+                style={{
+                  width: "22px",
+                  height: "22px",
+                  borderWidth: "3px",
+                  borderColor: "#10b981",
+                  borderTopColor: "transparent",
+                  flexShrink: 0,
+                }}
+              />
+              <div>
+                <strong style={{ fontSize: "14px", color: "#065f46", display: "block" }}>
+                  Analyzing crop leaf & identifying symptoms...
+                </strong>
+                <span style={{ fontSize: "12px", color: "#64748b" }}>
+                  Evaluating discoloration, spots, and pathogen damage to formulate remedies
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Diagnosis & Prescription Result Card */}
@@ -514,13 +646,13 @@ Severity: Level ${activeDiagnosis.severity}/5 (${activeDiagnosis.severityLabel |
                     {activeDiagnosis.severityLabel || "Noticeable"})
                   </span>
                   <span style={{ fontSize: "12px", color: "#64748b" }}>
-                    Crop: <strong>{crop}</strong>
+                    Crop: <strong>{activeDiagnosis.crop || crop || "Identified Crop"}</strong>
                   </span>
                 </div>
                 <h2>{activeDiagnosis.name}</h2>
-                {activeDiagnosis.localName && (
+                {(activeDiagnosis.localName || activeDiagnosis.hindiName || activeDiagnosis.teluguName) && (
                   <div className="diagnosis-local-name">
-                    {activeDiagnosis.localName}
+                    {activeDiagnosis.localName || activeDiagnosis.hindiName || activeDiagnosis.teluguName}
                   </div>
                 )}
                 {activeDiagnosis.scientificName && (
@@ -607,10 +739,11 @@ Severity: Level ${activeDiagnosis.severity}/5 (${activeDiagnosis.severityLabel |
                     color: "#374151",
                   }}
                 >
-                  {activeDiagnosis.immediateAction ||
-                    (activeDiagnosis.culturalTips
-                      ? activeDiagnosis.culturalTips
-                      : "Inspect field bunds, isolate infected leaves, and prepare recommended spray immediately.")}
+                  {lang === "hi" && (activeDiagnosis.hindiExplanation || activeDiagnosis.immediateAction)
+                    ? (activeDiagnosis.hindiExplanation || activeDiagnosis.immediateAction)
+                    : (activeDiagnosis.immediateAction ||
+                      activeDiagnosis.culturalTips ||
+                      "Inspect field bunds, isolate infected leaves, and prepare recommended spray immediately.")}
                 </p>
               </div>
             </div>
@@ -770,6 +903,22 @@ Severity: Level ${activeDiagnosis.severity}/5 (${activeDiagnosis.severityLabel |
           </article>
         )}
 
+        {/* ── Python Gemini Vision Result Card ── */}
+        {(pythonResult || pythonLoading) && (
+          <div className="drc-wrapper" ref={null}>
+            <p className="drc-wrapper-label">🤖 Gemini Vision AI Analysis</p>
+            {pythonLoading && !pythonResult && (
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "20px", color: "#64748b", fontSize: "14px" }}>
+                <div className="spinner" />
+                Gemini is analyzing your photo…
+              </div>
+            )}
+            {pythonResult && (
+              <DiagnosisResultCard data={pythonResult} imageUrl={preview} />
+            )}
+          </div>
+        )}
+
         {/* Saved Field Scans Log */}
         {scoutRecords.length > 0 && (
           <section
@@ -853,9 +1002,6 @@ Severity: Level ${activeDiagnosis.severity}/5 (${activeDiagnosis.severityLabel |
           </section>
         )}
       </div>
-
-      {/* Analyzing Overlay Animation */}
-      <AnalyzingOverlay isAnalyzing={isAnalyzing} crop={crop} />
     </main>
   );
 }

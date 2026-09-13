@@ -55,61 +55,39 @@ export default function AgroLoader({ onComplete, forceShow = false }) {
       aria-label="Loading Agro Sathi"
     >
       <div className="agro-splash-card">
-        {/* Animated Sprout Illustration */}
-        <div className="agro-splash-illustration">
-          <div className="sun-ring">
-            <Sun className="splash-sun-icon" size={38} />
-          </div>
-          <div className="sprout-pot">
-            <svg
-              className="sprout-svg"
-              viewBox="0 0 120 120"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              {/* Soil mound */}
-              <ellipse
-                cx="60"
-                cy="98"
-                rx="42"
-                ry="12"
-                fill="#5c3a21"
-                opacity="0.85"
-              />
-              <ellipse cx="60" cy="96" rx="36" ry="9" fill="#7a4e2d" />
-
-              {/* Animated Stem */}
-              <path
-                className="stem-grow-path"
-                d="M60 95 Q60 65 60 48"
-                stroke="#16a34a"
-                strokeWidth="5"
-                strokeLinecap="round"
-              />
-
-              {/* Left Leaf */}
-              <path
-                className="leaf-left-grow"
-                d="M60 68 C45 68 36 50 44 42 C54 36 58 56 60 68 Z"
-                fill="#22c55e"
-              />
-
-              {/* Right Leaf */}
-              <path
-                className="leaf-right-grow"
-                d="M60 55 C76 54 84 38 76 30 C66 26 62 44 60 55 Z"
-                fill="#4ade80"
-              />
-
-              {/* Dewdrop */}
-              <circle
-                className="dewdrop-pulse"
-                cx="72"
-                cy="36"
-                r="3"
-                fill="#38bdf8"
-              />
-            </svg>
+        {/* Official Brand Logo Emblem */}
+        <div
+          className="agro-splash-illustration"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: "16px",
+          }}
+        >
+          <div
+            style={{
+              width: "96px",
+              height: "96px",
+              borderRadius: "22px",
+              background: "#caeb80",
+              boxShadow: "0 10px 30px rgba(35, 83, 48, 0.22)",
+              overflow: "hidden",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <img
+              src="/agro-sathi-icon.png"
+              alt="AGRO SATHI"
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                display: "block",
+              }}
+            />
           </div>
         </div>
 

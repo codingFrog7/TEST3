@@ -78,7 +78,6 @@ import UserPage from "./UserPage.jsx";
 import DetectPage from "./DetectPage.jsx";
 import AgroSathiLogo from "../components/AgroSathiLogo.jsx";
 import DiagnosisResultModal from "../components/DiagnosisResultModal.jsx";
-import AnalyzingOverlay from "../components/AnalyzingOverlay.jsx";
 
 function pageFromPath(path) {
   if (path.startsWith("/login")) return "login";
@@ -318,7 +317,7 @@ function Footer() {
                 <Link href="/user">My Field Diary</Link>
               </li>
               <li>
-                <Link href="/about">About Agro Sathi</Link>
+                <Link href="/about">About AGRO SATHI</Link>
               </li>
               <li>
                 <a
@@ -1505,14 +1504,23 @@ function AboutPage() {
         title="Technology should make field decisions feel lighter."
         body="AGRO SATHI is a small, practical web companion for farmers and field teams. It brings a crop photo, local weather context and simple guidance into one calm place."
       >
-        <div className="about-mark">
-          <Leaf size={25} />
-          <span>
-            Detect
-            <br />
-            Guide
-            <br />
-            Grow
+        <div className="about-mark" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
+          <img
+            src="/agro-sathi-icon.png"
+            alt="AGRO SATHI"
+            style={{ width: "48px", height: "48px", borderRadius: "12px", display: "block" }}
+          />
+          <span
+            className="about-mark-title"
+            style={{
+              fontSize: "11px",
+              fontWeight: "800",
+              textAlign: "center",
+              letterSpacing: "0.05em",
+              color: "var(--foreground, #0f172a)",
+            }}
+          >
+            AGRO SATHI
           </span>
         </div>
       </PageIntro>

@@ -45,23 +45,25 @@ function AuthLoadingScreen() {
         alignItems: "center",
         justifyContent: "center",
         background: "var(--background, #f7f9f5)",
-        color: "var(--foreground, #183628)",
+        color: "var(--foreground, #0f172a)",
         gap: "16px",
       }}
     >
       <div
         style={{
-          width: "52px",
-          height: "52px",
+          width: "56px",
+          height: "56px",
           borderRadius: "14px",
-          background: "linear-gradient(135deg, #1c563d 0%, #2f7a57 100%)",
-          display: "grid",
-          placeItems: "center",
-          color: "#ffffff",
-          boxShadow: "0 8px 20px rgba(28, 86, 61, 0.25)",
+          background: "#caeb80",
+          boxShadow: "0 8px 20px rgba(28, 86, 61, 0.22)",
+          overflow: "hidden",
         }}
       >
-        <Sprout size={28} />
+        <img
+          src="/agro-sathi-icon.png"
+          alt="AGRO SATHI"
+          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+        />
       </div>
       <div style={{ textAlign: "center" }}>
         <div
@@ -69,6 +71,7 @@ function AuthLoadingScreen() {
             fontSize: "16px",
             fontWeight: "800",
             letterSpacing: "-0.01em",
+            color: "var(--foreground, #0f172a)",
           }}
         >
           AGRO SATHI

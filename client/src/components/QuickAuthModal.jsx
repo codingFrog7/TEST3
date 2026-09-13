@@ -138,14 +138,28 @@ export default function QuickAuthModal({
       <div className="quick-auth-card" onClick={e => e.stopPropagation()}>
         {/* Modal Header */}
         <div className="quick-auth-header">
-          <div className="quick-auth-brand-badge">
-            <span className="quick-auth-icon-circle">
-              <Sprout size={18} />
-            </span>
+          <div className="quick-auth-brand-badge" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div
+              style={{
+                width: "38px",
+                height: "38px",
+                borderRadius: "10px",
+                background: "#caeb80",
+                boxShadow: "0 2px 8px rgba(35, 83, 48, 0.18)",
+                overflow: "hidden",
+                flexShrink: 0,
+              }}
+            >
+              <img
+                src="/agro-sathi-icon.png"
+                alt="AGRO SATHI"
+                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+              />
+            </div>
             <div>
               <h2 id="quick-auth-title" className="quick-auth-title">
                 {mode === "login"
-                  ? "Sign In to Agro Sathi"
+                  ? "Sign In to AGRO SATHI"
                   : mode === "signup"
                     ? "Create Farmer Account"
                     : "Reset Password"}
