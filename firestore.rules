@@ -30,7 +30,8 @@ service cloud.firestore {
 
     // Entity Validation Helpers
     function isValidScoutRecord(data) {
-      return data.userId == request.auth.uid
+      return data.keys().hasOnly(['userId', 'crop', 'disease', 'severity', 'scientific', 'remedy', 'date', 'time', 'createdAt'])
+        && data.userId == request.auth.uid
         && data.crop is string && data.crop.size() >= 1 && data.crop.size() <= 50
         && data.disease is string && data.disease.size() >= 1 && data.disease.size() <= 100
         && data.severity is number && data.severity >= 1 && data.severity <= 5
@@ -42,7 +43,8 @@ service cloud.firestore {
     }
 
     function isValidFieldNote(data) {
-      return data.userId == request.auth.uid
+      return data.keys().hasOnly(['userId', 'note', 'authorName', 'cropTag', 'createdAt'])
+        && data.userId == request.auth.uid
         && data.note is string && data.note.size() >= 1 && data.note.size() <= 1000
         && (!('authorName' in data) || (data.authorName is string && data.authorName.size() <= 100))
         && (!('cropTag' in data) || (data.cropTag is string && data.cropTag.size() <= 50))
@@ -50,7 +52,8 @@ service cloud.firestore {
     }
 
     function isValidFarmerProfile(data) {
-      return data.userId == request.auth.uid
+      return data.keys().hasOnly(['userId', 'displayName', 'location', 'primaryCrop', 'updatedAt'])
+        && data.userId == request.auth.uid
         && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 100
         && (!('location' in data) || (data.location is string && data.location.size() <= 100))
         && (!('primaryCrop' in data) || (data.primaryCrop is string && data.primaryCrop.size() <= 50))
@@ -103,10 +106,16 @@ service cloud.firestore {
     // Farmer Regional Profile & Settings
     match /farmer_profiles/{userId} {
       allow get: if isSignedIn() && isValidId(userId) && userId == request.auth.uid;
-      allow create, update: if isVerified()
+      allow create: if isVerified()
         && isValidId(userId)
         && userId == request.auth.uid
         && isValidFarmerProfile(incoming())
+        && incoming().updatedAt == request.time;
+      allow update: if isVerified()
+        && isValidId(userId)
+        && userId == request.auth.uid
+        && isValidFarmerProfile(incoming())
+        && incoming().userId == existing().userId
         && incoming().updatedAt == request.time;
       allow delete: if isVerified()
         && isValidId(userId)
