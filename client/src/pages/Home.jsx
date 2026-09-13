@@ -77,7 +77,6 @@ import AuthPage from "./AuthPage.jsx";
 import UserPage from "./UserPage.jsx";
 import DetectPage from "./DetectPage.jsx";
 import AgroSathiLogo from "../components/AgroSathiLogo.jsx";
-import DiagnosisResultModal from "../components/DiagnosisResultModal.jsx";
 
 function pageFromPath(path) {
   if (path.startsWith("/login")) return "login";

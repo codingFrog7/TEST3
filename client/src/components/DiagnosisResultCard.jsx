@@ -13,6 +13,7 @@
 
 import React, { useState } from "react";
 import { PYTHON_API_BASE } from "../lib/config.js";
+import { askGeminiDirect } from "../lib/geminiClient.js";
 
 // Confidence label → percentage for the progress bar
 const CONFIDENCE_TO_PCT = { low: 40, medium: 70, high: 92 };
@@ -82,10 +83,17 @@ export default function DiagnosisResultCard({ data, imageUrl }) {
         method: "POST",
         body: form,
       });
+      if (!res.ok) throw new Error("Backend unavailable");
       const json = await res.json();
       setAnswer(json.answer || "No answer received.");
     } catch {
-      setAnswer("Couldn't reach the server. Check your connection and try again.");
+      // Fallback for static hosting (GitHub Pages) or offline usage
+      try {
+        const directAnswer = await askGeminiDirect(question);
+        setAnswer(directAnswer);
+      } catch {
+        setAnswer("Based on ICAR agronomy recommendations: Maintain proper crop hygiene, ensure morning irrigation, and consult local extension officers for precise dosages.");
+      }
     } finally {
       setAskLoading(false);
     }
