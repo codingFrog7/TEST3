@@ -3,7 +3,10 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
+const repo = process.env.GITHUB_PAGES === "true" ? "/TEST3" : "";
+
 export default defineConfig({
+  base: repo,
   plugins: [react({ fastRefresh: false }), tailwindcss()],
   resolve: {
     alias: {
