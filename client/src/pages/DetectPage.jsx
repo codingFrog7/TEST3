@@ -21,7 +21,6 @@ import { useFirebase } from "../context/FirebaseContext.jsx";
 import { DISEASE_DATABASE } from "../data/diseaseDatabase.js";
 import DiagnosisResultCard from "../components/DiagnosisResultCard.jsx";
 import { PYTHON_API_BASE } from "../lib/config.js";
-import { diagnoseImageDirect } from "../lib/geminiClient.js";
 
 const CROPS = [
   { id: "Chilli", label: "Chilli", icon: "🌶️" },
@@ -222,25 +221,14 @@ export default function DetectPage() {
       });
 
       if (!res.ok) {
-        throw new Error(`Server returned ${res.status}`);
+        const errJson = await res.json().catch(() => ({}));
+        console.warn("Python diagnose failed:", errJson);
+        return;
       }
       const json = await res.json();
       setPythonResult(json);
     } catch (err) {
-      // If backend is unavailable (e.g. GitHub Pages), attempt direct client-side Gemini Vision
-      try {
-        if (imageBase64OrUrl && imageBase64OrUrl.startsWith("data:")) {
-          const [header, b64] = imageBase64OrUrl.split(",");
-          const mimeMatch = header.match(/:(.*?);/);
-          const mime = mimeMatch ? mimeMatch[1] : "image/jpeg";
-          const directResult = await diagnoseImageDirect(b64, mime, rawFile?.name || "leaf.jpg");
-          if (directResult) {
-            setPythonResult(directResult);
-          }
-        }
-      } catch (clientErr) {
-        console.warn("Client-side direct Gemini diagnosis error:", clientErr.message);
-      }
+      console.warn("Python backend unavailable (is uvicorn running?):", err.message);
     } finally {
       setPythonLoading(false);
     }
@@ -276,10 +264,6 @@ export default function DetectPage() {
           fileName: fileName || `${cropName || "crop"}-leaf.jpg`,
         }),
       });
-
-      if (!response.ok) {
-        throw new Error(`Crop doctor endpoint returned status ${response.status}`);
-      }
 
       const data = await response.json();
       if (data && data.diagnosis) {

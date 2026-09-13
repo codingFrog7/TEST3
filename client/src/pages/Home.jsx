@@ -1280,9 +1280,8 @@ function WeatherPage() {
               const lowVal = parseInt(low, 10) || 20;
               return (
                 <div
-                  className={`forecast-large-day ${index === 0 ? "today" : ""} ${
-                    rainVal >= 50 ? "has-rain-alert" : ""
-                  } ${lowVal <= 8 ? "has-frost-alert" : ""}`}
+                  className={`forecast-large-day ${index === 0 ? "today" : ""} ${rainVal >= 50 ? "has-rain-alert" : ""
+                    } ${lowVal <= 8 ? "has-frost-alert" : ""}`}
                   key={day}
                 >
                   <span className="forecast-large-day-name">{day}</span>
@@ -1367,12 +1366,12 @@ function AdvisoryPage() {
     active === "All"
       ? advisoryCards
       : advisoryCards.filter(card =>
-          active === "Weather"
-            ? card.tag === "WEATHER"
-            : active === "Crop care"
-              ? card.tag === "CHILLI"
-              : card.tag === "ALL CROPS"
-        );
+        active === "Weather"
+          ? card.tag === "WEATHER"
+          : active === "Crop care"
+            ? card.tag === "CHILLI"
+            : card.tag === "ALL CROPS"
+      );
   return (
     <main className="page-width page-shell">
       <PageIntro

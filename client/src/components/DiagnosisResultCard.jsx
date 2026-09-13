@@ -13,7 +13,6 @@
 
 import React, { useState } from "react";
 import { PYTHON_API_BASE } from "../lib/config.js";
-import { askGeminiDirect } from "../lib/geminiClient.js";
 
 // Confidence label → percentage for the progress bar
 const CONFIDENCE_TO_PCT = { low: 40, medium: 70, high: 92 };
@@ -83,17 +82,10 @@ export default function DiagnosisResultCard({ data, imageUrl }) {
         method: "POST",
         body: form,
       });
-      if (!res.ok) throw new Error("Backend unavailable");
       const json = await res.json();
       setAnswer(json.answer || "No answer received.");
     } catch {
-      // Fallback for static hosting (GitHub Pages) or offline usage
-      try {
-        const directAnswer = await askGeminiDirect(question);
-        setAnswer(directAnswer);
-      } catch {
-        setAnswer("Based on ICAR agronomy recommendations: Maintain proper crop hygiene, ensure morning irrigation, and consult local extension officers for precise dosages.");
-      }
+      setAnswer("Couldn't reach the server. Check your connection and try again.");
     } finally {
       setAskLoading(false);
     }
@@ -152,37 +144,37 @@ export default function DiagnosisResultCard({ data, imageUrl }) {
       {/* ── Sections ── */}
       <SectionRow
         iconClass="drc-icon-cause"
-        svgPath={<><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></>}
+        svgPath={<><circle cx="12" cy="12" r="9" /><path d="M12 8v5M12 16h.01" /></>}
         title="Cause"
         text={r.cause}
       />
       <SectionRow
         iconClass="drc-icon-symptoms"
-        svgPath={<path d="M12 2 4 7v10l8 5 8-5V7z"/>}
+        svgPath={<path d="M12 2 4 7v10l8 5 8-5V7z" />}
         title="Symptoms"
         text={r.symptoms}
       />
       <SectionRow
         iconClass="drc-icon-treatment"
-        svgPath={<><path d="M9 2v6l-5 9a2 2 0 0 0 2 3h12a2 2 0 0 0 2-3l-5-9V2"/><path d="M8 2h8"/></>}
+        svgPath={<><path d="M9 2v6l-5 9a2 2 0 0 0 2 3h12a2 2 0 0 0 2-3l-5-9V2" /><path d="M8 2h8" /></>}
         title="Treatment"
         text={r.treatment}
       />
       <SectionRow
         iconClass="drc-icon-organic"
-        svgPath={<path d="M12 22c5-2 8-6 8-12V5l-8-3-8 3v5c0 6 3 10 8 12Z"/>}
+        svgPath={<path d="M12 22c5-2 8-6 8-12V5l-8-3-8 3v5c0 6 3 10 8 12Z" />}
         title="Organic alternative"
         text={r.organic_alternative}
       />
       <SectionRow
         iconClass="drc-icon-prevention"
-        svgPath={<path d="M12 2v20M2 12h20"/>}
+        svgPath={<path d="M12 2v20M2 12h20" />}
         title="Prevention"
         text={r.prevention}
       />
       <SectionRow
         iconClass="drc-icon-recovery"
-        svgPath={<><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></>}
+        svgPath={<><path d="M12 8v4l3 3" /><circle cx="12" cy="12" r="9" /></>}
         title="Expected recovery"
         text={r.recovery_time}
       />
