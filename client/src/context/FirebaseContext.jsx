@@ -72,7 +72,7 @@ export function FirebaseProvider({ children }) {
 
     // 1. Scout Records Query
     const scoutPath = "scout_records";
-    let unsubScout = () => {};
+    let unsubScout = () => { };
     try {
       const q = query(
         collection(db, scoutPath),
@@ -97,9 +97,9 @@ export function FirebaseProvider({ children }) {
                 data.time ||
                 (data.createdAt?.toDate
                   ? data.createdAt.toDate().toLocaleTimeString("en-IN", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
                   : ""),
             };
           });
@@ -124,7 +124,7 @@ export function FirebaseProvider({ children }) {
 
     // 2. Field Notes Query
     const notesPath = "field_notes";
-    let unsubNotes = () => {};
+    let unsubNotes = () => { };
     try {
       const qNotes = query(
         collection(db, notesPath),
@@ -155,7 +155,7 @@ export function FirebaseProvider({ children }) {
 
     // 3. Farmer Profile Doc
     const profilePath = `farmer_profiles/${user.uid}`;
-    let unsubProfile = () => {};
+    let unsubProfile = () => { };
     try {
       const profileRef = doc(db, "farmer_profiles", user.uid);
       unsubProfile = onSnapshot(
