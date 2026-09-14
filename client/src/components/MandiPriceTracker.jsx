@@ -285,6 +285,8 @@ export default function MandiPriceTracker() {
           type="button"
           className={`calculator-toggle-btn ${showCalculator ? "active" : ""}`}
           onClick={() => setShowCalculator(!showCalculator)}
+          aria-expanded={showCalculator}
+          aria-controls="mandi-calculator-panel"
         >
           <Calculator size={15} />
           <span>
@@ -295,7 +297,7 @@ export default function MandiPriceTracker() {
 
       {/* Interactive Mandi Profit Calculator Drawer */}
       {showCalculator && (
-        <div className="mandi-calculator-panel">
+        <div className="mandi-calculator-panel" id="mandi-calculator-panel">
           <div className="calc-header">
             <div className="calc-title">
               <Coins size={18} className="text-amber-500" />
@@ -484,6 +486,7 @@ export default function MandiPriceTracker() {
                   const el = document.getElementById("mandi-bhav-section");
                   if (el) el.scrollIntoView({ behavior: "smooth" });
                 }}
+                aria-label={`Calculate lot price for ${crop.name}`}
               >
                 <Calculator size={13} /> Calculate lot price &rarr;
               </button>
