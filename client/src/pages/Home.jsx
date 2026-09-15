@@ -1080,7 +1080,7 @@ function GuidesPage() {
           />
         </div>
         <div className="guide-filters">
-          {["All", "Kharif", "Rabi"].map(filter => (
+          {["All", "Kharif", "Rabi"].map((filter) => (
             <button
               key={filter}
               className={`filter-button ${season === filter ? "active" : ""}`}
@@ -1832,7 +1832,7 @@ function AdvisoryPage() {
       <div className="advisory-layout">
         <section>
           <div className="filter-tabs" role="tablist">
-            {filters.map(filter => (
+            {filters.map((filter) => (
               <button
                 key={filter}
                 className={active === filter ? "active" : ""}

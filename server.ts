@@ -4,16 +4,48 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import multer from "multer";
+import helmet from "helmet";
+import cors from "cors";
+import rateLimit from "express-rate-limit";
 
-// multer for multipart file upload handling on /api/python/diagnose
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 25 * 1024 * 1024 } });
+// multer for multipart file upload handling on /api/python/diagnose (Security: check mime types)
+const upload = multer({ 
+  storage: multer.memoryStorage(), 
+  limits: { fileSize: 25 * 1024 * 1024 }, // 25MB
+  fileFilter: (_req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Invalid file type. Only JPG, PNG, WEBP and HEIC images are allowed."));
+    }
+  }
+});
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
+
+// Security Middlewares
+app.use(helmet({
+  contentSecurityPolicy: false, // Vite uses inline scripts heavily in dev
+  crossOriginEmbedderPolicy: false
+}));
+app.use(cors({
+  origin: "*", // allow all or restrict to specific domain in production
+}));
 
 // Middleware for parsing large photo payloads
 app.use(express.json({ limit: "25mb" }));
 app.use(express.urlencoded({ extended: true, limit: "25mb" }));
+
+// Rate Limiter for AI endpoints to prevent abuse
+const aiRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 50, // Limit each IP to 50 requests per `window` (here, per 15 minutes)
+  message: { success: false, error: "Too many AI requests from this IP, please try again after 15 minutes." },
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
 
 // ── Raw Gemini API helper (bypasses SDK key format validation) ────────────────
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
@@ -102,7 +134,7 @@ const VISION_SYSTEM_INSTRUCTION =
   "(string), prevention (string), recovery_time (string), severity (string: " +
   "none/low/medium/high).";
 
-app.post("/api/python/diagnose", upload.single("file"), async (req: any, res: any) => {
+app.post("/api/python/diagnose", aiRateLimiter, upload.single("file"), async (req: any, res: any) => {
   try {
     if (!req.file) return res.status(400).json({ error: "No image file uploaded" });
 
@@ -175,7 +207,7 @@ const AG_SYSTEM_PROMPT =
   "product choice/dosage should follow the product label and local agricultural " +
   "extension guidance. Keep answers concise and farmer-friendly.";
 
-app.post("/api/python/ask", express.urlencoded({ extended: true }), async (req: any, res: any) => {
+app.post("/api/python/ask", aiRateLimiter, express.urlencoded({ extended: true }), async (req: any, res: any) => {
   try {
     const question = (req.body?.question || "").trim();
     if (!question) return res.status(400).json({ error: "Question cannot be empty" });
