@@ -346,28 +346,17 @@ function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="flex flex-col gap-6 pt-8 border-t-4 border-slate-900">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm font-black text-slate-600">
-            <div>
-              <span>© 2026 AGRO SATHI · Dedicated to Indian Farmers</span>
-            </div>
-            <div className="text-center md:text-right">
-              <span>
-                Advisory is for guidance. Follow local KVK advice for chemical spraying.
-              </span>
-            </div>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-3 pt-6 border-t-2 border-slate-300">
+        <div className="flex flex-col gap-6 pt-8 border-t-4 border-slate-900 mt-8 relative">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
             <span className="font-black text-xl text-slate-900 tracking-widest uppercase">Team Froggers</span>
             <span className="hidden sm:inline text-slate-400">|</span>
-            <a 
-              href="mailto:contact@teamfroggers.com" 
-              className="flex items-center gap-2 px-3 py-1.5 bg-white border-2 border-slate-900 rounded-lg shadow-[2px_2px_0px_0px_#0f172a] hover:translate-y-0.5 hover:shadow-[1px_1px_0px_0px_#0f172a] active:translate-y-1 active:shadow-none transition-all text-slate-900 font-bold"
+            <Link 
+              href="/team" 
+              className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border-2 border-slate-900 rounded-lg shadow-[2px_2px_0px_0px_#0f172a] hover:translate-y-0.5 hover:shadow-[1px_1px_0px_0px_#0f172a] active:translate-y-1 active:shadow-none transition-all text-slate-900 font-bold cursor-pointer"
             >
-              <Mail size={16} className="text-red-500" />
-              <span>Contact via Gmail</span>
-            </a>
+              <User size={16} className="text-slate-700" />
+              <span>About Team</span>
+            </Link>
           </div>
         </div>
       </div>

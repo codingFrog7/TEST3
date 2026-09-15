@@ -3,6 +3,7 @@ import { Route, Switch, Redirect, useLocation } from "wouter";
 import Home from "./pages/Home.jsx";
 import AuthPage from "./pages/AuthPage.jsx";
 import NotFound from "./pages/NotFound.jsx";
+import TeamPage from "./pages/TeamPage.jsx";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 import { FirebaseProvider, useFirebase } from "./context/FirebaseContext.jsx";
 
@@ -90,6 +91,7 @@ function AppRoutes() {
       <Route path="/weather" component={Home} />
       <Route path="/advisory" component={Home} />
       <Route path="/about" component={Home} />
+      <Route path="/team" component={TeamPage} />
       <Route component={NotFound} />
     </Switch>
   );
