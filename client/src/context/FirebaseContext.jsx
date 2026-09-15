@@ -40,7 +40,21 @@ export function FirebaseProvider({ children }) {
     const unsubscribe = onAuthStateChanged(
       auth,
       currentUser => {
-        setUser(currentUser);
+        if (currentUser) {
+          setUser(currentUser);
+        } else {
+          const isGuest = localStorage.getItem("agro_guest_mode") === "true";
+          if (isGuest) {
+            setUser({
+              uid: "guest_local",
+              isGuest: true,
+              displayName: "Guest Farmer",
+              email: ""
+            });
+          } else {
+            setUser(null);
+          }
+        }
         setAuthLoading(false);
       },
       err => {
@@ -53,8 +67,8 @@ export function FirebaseProvider({ children }) {
 
   // Listen to Firestore scout_records & field_notes when user is signed in
   useEffect(() => {
-    if (!user) {
-      // If unauthenticated, populate from local storage for offline continuity
+    if (!user || user.isGuest) {
+      // If unauthenticated or guest, populate from local storage for offline continuity
       try {
         const localScout = JSON.parse(
           localStorage.getItem("agro_scout_history") || "[]"
@@ -63,8 +77,35 @@ export function FirebaseProvider({ children }) {
       } catch (e) {
         console.warn("Error reading local scout history", e);
       }
-      setFieldNotes([]);
-      setFarmerProfile(null);
+      try {
+        const localNotes = JSON.parse(
+          localStorage.getItem("agro_field_notes") || "[]"
+        );
+        setFieldNotes(localNotes);
+      } catch (e) {
+        console.warn("Error reading local field notes", e);
+      }
+      try {
+        const localProfile = JSON.parse(
+          localStorage.getItem("agro_farmer_profile") || "null"
+        );
+        if (localProfile) {
+          setFarmerProfile(localProfile);
+        } else if (user?.isGuest) {
+          setFarmerProfile({
+            userId: "guest_local",
+            displayName: "Guest Farmer",
+            location: "Local Farm",
+            primaryCrop: "Mixed",
+            email: "",
+            photoURL: null,
+          });
+        } else {
+          setFarmerProfile(null);
+        }
+      } catch (e) {
+        console.warn("Error reading local profile", e);
+      }
       return;
     }
 
@@ -72,7 +113,7 @@ export function FirebaseProvider({ children }) {
 
     // 1. Scout Records Query
     const scoutPath = "scout_records";
-    let unsubScout = () => { };
+    let unsubScout = () => {};
     try {
       const q = query(
         collection(db, scoutPath),
@@ -97,9 +138,9 @@ export function FirebaseProvider({ children }) {
                 data.time ||
                 (data.createdAt?.toDate
                   ? data.createdAt.toDate().toLocaleTimeString("en-IN", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
                   : ""),
             };
           });
@@ -113,18 +154,19 @@ export function FirebaseProvider({ children }) {
           setSyncStatus("ready");
         },
         error => {
-          setSyncStatus("error");
-          setSyncError(error.message);
-          handleFirestoreError(error, OperationType.LIST, scoutPath);
+          console.warn("Firestore scout records sync notice:", error.message);
+          setSyncStatus("offline");
+          // Keep local cached records active without interrupting user session
         }
       );
     } catch (err) {
-      handleFirestoreError(err, OperationType.LIST, scoutPath);
+      console.warn("Scout query initialization notice:", err?.message || err);
+      setSyncStatus("offline");
     }
 
     // 2. Field Notes Query
     const notesPath = "field_notes";
-    let unsubNotes = () => { };
+    let unsubNotes = () => {};
     try {
       const qNotes = query(
         collection(db, notesPath),
@@ -146,16 +188,16 @@ export function FirebaseProvider({ children }) {
           setFieldNotes(notes);
         },
         error => {
-          handleFirestoreError(error, OperationType.LIST, notesPath);
+          console.warn("Firestore field notes sync notice:", error.message);
         }
       );
     } catch (err) {
-      handleFirestoreError(err, OperationType.LIST, notesPath);
+      console.warn("Field notes initialization notice:", err?.message || err);
     }
 
     // 3. Farmer Profile Doc
     const profilePath = `farmer_profiles/${user.uid}`;
-    let unsubProfile = () => { };
+    let unsubProfile = () => {};
     try {
       const profileRef = doc(db, "farmer_profiles", user.uid);
       unsubProfile = onSnapshot(
@@ -167,22 +209,56 @@ export function FirebaseProvider({ children }) {
             // Create default profile if not exists
             const initialProfile = {
               userId: user.uid,
-              displayName: user.displayName || "Kisan Farmer",
+              displayName:
+                user.displayName || user.email?.split("@")[0] || "Kisan Farmer",
               location: "Karimnagar, Telangana",
-              primaryCrop: "Cotton",
+              primaryCrop: "Cotton / Chilli",
+              email: user.email || "",
+              photoURL: user.photoURL || null,
               updatedAt: serverTimestamp(),
             };
+            setFarmerProfile(initialProfile);
             setDoc(profileRef, initialProfile).catch(e =>
-              handleFirestoreError(e, OperationType.CREATE, profilePath)
+              console.warn(
+                "Could not save initial profile to cloud:",
+                e.message
+              )
             );
           }
         },
         error => {
-          handleFirestoreError(error, OperationType.GET, profilePath);
+          console.warn("Firestore farmer profile sync notice:", error.message);
+          // Set fallback profile state from current user auth
+          setFarmerProfile(
+            prev =>
+              prev || {
+                userId: user.uid,
+                displayName:
+                  user.displayName ||
+                  user.email?.split("@")[0] ||
+                  "Kisan Farmer",
+                location: "Karimnagar, Telangana",
+                primaryCrop: "Cotton / Chilli",
+                email: user.email || "",
+                photoURL: user.photoURL || null,
+              }
+          );
         }
       );
     } catch (err) {
-      handleFirestoreError(err, OperationType.GET, profilePath);
+      console.warn("Farmer profile query notice:", err?.message || err);
+      setFarmerProfile(
+        prev =>
+          prev || {
+            userId: user.uid,
+            displayName:
+              user.displayName || user.email?.split("@")[0] || "Kisan Farmer",
+            location: "Karimnagar, Telangana",
+            primaryCrop: "Cotton / Chilli",
+            email: user.email || "",
+            photoURL: user.photoURL || null,
+          }
+      );
     }
 
     return () => {
@@ -195,7 +271,7 @@ export function FirebaseProvider({ children }) {
   // Save a crop diagnostic scan
   const saveScoutRecord = async record => {
     setSyncStatus("syncing");
-    if (!user) {
+    if (!user || user.isGuest) {
       // Unauthenticated fallback: save to localStorage
       const localEntry = {
         id: "local_" + Date.now(),
@@ -258,7 +334,7 @@ export function FirebaseProvider({ children }) {
 
   // Delete a scout record
   const deleteScoutRecord = async recordId => {
-    if (!user) {
+    if (!user || user.isGuest) {
       const updated = scoutRecords.filter(r => r.id !== recordId);
       setScoutRecords(updated);
       localStorage.setItem("agro_scout_history", JSON.stringify(updated));
@@ -275,9 +351,21 @@ export function FirebaseProvider({ children }) {
 
   // Add field advisory note
   const addFieldNote = async ({ note, authorName, cropTag }) => {
-    if (!user) {
-      alert("Please sign in with Google to save notes to Firebase Cloud.");
-      return null;
+    if (!user || user.isGuest) {
+      const localEntry = {
+        id: "note_local_" + Date.now(),
+        note: String(note).slice(0, 1000),
+        authorName: String(authorName || user?.displayName || "Guest Farmer").slice(0, 100),
+        cropTag: String(cropTag || "General").slice(0, 50),
+        date: new Date().toLocaleDateString("en-IN"),
+        createdAt: new Date().toISOString()
+      };
+      const updated = [localEntry, ...fieldNotes];
+      setFieldNotes(updated);
+      try {
+        localStorage.setItem("agro_field_notes", JSON.stringify(updated));
+      } catch (e) {}
+      return localEntry;
     }
     const noteId =
       "note_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
@@ -303,6 +391,18 @@ export function FirebaseProvider({ children }) {
   // Update farmer profile
   const updateFarmerProfile = async updates => {
     if (!user) return;
+    if (user.isGuest) {
+      const payload = {
+        userId: "guest_local",
+        displayName: String(updates.displayName || "Guest Farmer").slice(0, 100),
+        location: String(updates.location || "Local Farm").slice(0, 100),
+        primaryCrop: String(updates.primaryCrop || "Mixed").slice(0, 50),
+        updatedAt: new Date().toISOString(),
+      };
+      setFarmerProfile(payload);
+      localStorage.setItem("agro_farmer_profile", JSON.stringify(payload));
+      return;
+    }
     const docPath = `farmer_profiles/${user.uid}`;
     try {
       const docRef = doc(db, "farmer_profiles", user.uid);
@@ -341,17 +441,17 @@ export function FirebaseProvider({ children }) {
       const code = err?.code || "";
       if (
         code === "auth/popup-closed-by-user" ||
-        code === "auth/cancelled-popup-request" ||
-        code === "auth/popup-blocked"
+        code === "auth/cancelled-popup-request"
       ) {
         setSyncStatus("ready");
         setSyncError(null);
         return null;
       }
+      const friendlyMessage = getFriendlyAuthErrorMessage(err);
       setSyncStatus("error");
-      setSyncError(err?.message || "Failed to sign in");
-      console.error("Sign in failed", err);
-      return null;
+      setSyncError(friendlyMessage);
+      console.error("Google sign in failed:", err);
+      throw new Error(friendlyMessage);
     }
   };
 
@@ -395,9 +495,22 @@ export function FirebaseProvider({ children }) {
     }
   };
 
+  const signInAsGuest = () => {
+    localStorage.setItem("agro_guest_mode", "true");
+    setUser({
+      uid: "guest_local",
+      isGuest: true,
+      displayName: "Guest Farmer",
+      email: ""
+    });
+  };
+
   const handleSignOut = async () => {
     try {
-      await logoutUser();
+      if (!user?.isGuest) {
+        await logoutUser();
+      }
+      localStorage.removeItem("agro_guest_mode");
       setUser(null);
       setScoutRecords([]);
       setFieldNotes([]);
@@ -426,6 +539,8 @@ export function FirebaseProvider({ children }) {
         signInWithEmail: handleEmailSignIn,
         signUpWithEmail: handleEmailSignUp,
         sendPasswordReset: handlePasswordReset,
+        signInAsGuest,
+        logout: handleSignOut,
         getFriendlyError: getFriendlyAuthErrorMessage,
         signOut: handleSignOut,
       }}

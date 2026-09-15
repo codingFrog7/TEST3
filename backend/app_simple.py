@@ -52,6 +52,21 @@ app.add_middleware(
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 
+# ── Plant / Crop Image Guard ─────────────────────────────────────────────────
+# This prompt is used in a FAST pre-check before running the full diagnosis.
+# We ask the model one simple YES/NO question: is this a plant / crop / leaf?
+PLANT_CHECK_PROMPT = (
+    "Look at this image carefully. "
+    "Is this image of a plant, crop, leaf, flower, tree, vegetable, fruit, "
+    "or any kind of agricultural / botanical subject? "
+    "Reply with ONLY a single word — YES or NO — and nothing else. "
+    "If you see ANY plant or plant part (leaf, stem, root, flower, seed, pod, "
+    "fruit, bark, grass, weed) reply YES. "
+    "If the image is of a person, animal, vehicle, landscape without plants, "
+    "food product, building, object, or anything unrelated to plants/agriculture, "
+    "reply NO."
+)
+
 SYSTEM_INSTRUCTION = (
     "You are an agricultural expert analyzing a photo of a crop or plant. "
     "Identify the crop, and check for signs of disease, pest damage, or nutrient "
@@ -79,48 +94,108 @@ AG_SYSTEM_PROMPT = (
 )
 
 
+FALLBACK_MODELS = [
+    'gemini-3.1-flash-lite',
+    'gemini-3.5-flash-lite',
+    'gemini-1.5-flash-8b',
+    'gemini-1.5-flash',
+    'gemini-3.5-flash',
+]
+
+
+def check_is_plant(image_bytes: bytes, mime_type: str) -> bool:
+    """
+    Fast pre-flight check: ask Gemini if the image contains a plant / crop / leaf.
+    Returns True if it IS a plant image, False otherwise.
+    On any API error, returns True (fail-open: let the main diagnosis handle it).
+    """
+    if not client:
+        return True  # Can't check without a client — let the main call handle auth error
+
+    for model_name in FALLBACK_MODELS:
+        try:
+            response = client.models.generate_content(
+                model=model_name,
+                contents=[
+                    types.Part.from_bytes(data=image_bytes, mime_type=mime_type),
+                    PLANT_CHECK_PROMPT,
+                ],
+                config=types.GenerateContentConfig(
+                    temperature=0.0,  # Deterministic for a YES/NO question
+                    max_output_tokens=5,
+                ),
+            )
+            answer = (response.text or "").strip().upper()
+            # Accept "YES" / "YES." / starts-with-YES
+            return answer.startswith("YES")
+        except Exception:
+            continue  # Try next model
+
+    return True  # Fail-open if all models fail
+
+
 def call_gemini_vision(image_bytes: bytes, mime_type: str) -> dict:
     if not client:
         raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured on server")
 
-    response = client.models.generate_content(
-        model='gemini-3.6-flash',
-        contents=[
-            types.Part.from_bytes(data=image_bytes, mime_type=mime_type),
-            "Analyze this crop/plant photo.",
-        ],
-        config=types.GenerateContentConfig(
-            system_instruction=SYSTEM_INSTRUCTION,
-            temperature=0.2,
-        ),
-    )
-    raw_text = response.text or ""
+    last_error = ""
+    for model_name in FALLBACK_MODELS:
+        try:
+            response = client.models.generate_content(
+                model=model_name,
+                contents=[
+                    types.Part.from_bytes(data=image_bytes, mime_type=mime_type),
+                    "Analyze this crop/plant photo.",
+                ],
+                config=types.GenerateContentConfig(
+                    system_instruction=SYSTEM_INSTRUCTION,
+                    temperature=0.2,
+                ),
+            )
+            raw_text = response.text or ""
+            cleaned = raw_text.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+            try:
+                return json.loads(cleaned)
+            except json.JSONDecodeError:
+                return {
+                    "crop": "Unknown", "disease": "Unclear", "confidence": "low",
+                    "cause": raw_text, "symptoms": "", "treatment": "",
+                    "organic_alternative": "", "prevention": "", "recovery_time": "",
+                    "severity": "none",
+                }
+        except Exception as e:
+            last_error = str(e)
+            continue
 
-    cleaned = raw_text.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
-    try:
-        return json.loads(cleaned)
-    except json.JSONDecodeError:
-        # Fall back gracefully instead of crashing the request
-        return {
-            "crop": "Unknown", "disease": "Unclear", "confidence": "low",
-            "cause": raw_text, "symptoms": "", "treatment": "",
-            "organic_alternative": "", "prevention": "", "recovery_time": "",
-            "severity": "none",
-        }
+    return {
+        "crop": "Error", "disease": "API Error", "confidence": "low",
+        "cause": f"Google Gemini API Error: {last_error}", "symptoms": "", "treatment": "",
+        "organic_alternative": "", "prevention": "", "recovery_time": "",
+        "severity": "none",
+    }
 
 
 def call_gemini_text(prompt: str) -> str:
     if not client:
         return "(LLM not configured yet - set the GEMINI_API_KEY in backend/.env)"
 
-    response = client.models.generate_content(
-        model='gemini-3.6-flash',
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            system_instruction=AG_SYSTEM_PROMPT,
-        ),
-    )
-    return response.text or ""
+    last_error = ""
+    for model_name in FALLBACK_MODELS:
+        try:
+            response = client.models.generate_content(
+                model=model_name,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction=AG_SYSTEM_PROMPT,
+                ),
+            )
+            if response.text:
+                return response.text
+        except Exception as e:
+            last_error = str(e)
+            continue
+
+    return f"API Error (Quota exceeded or server issue): {last_error}"
 
 
 @app.get("/")
@@ -135,10 +210,27 @@ def root():
 
 @app.post("/diagnose")
 async def diagnose(file: UploadFile = File(...)):
+    # ── Step 1: Basic file type guard ────────────────────────────────────────
     if not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="Please upload an image file")
+        raise HTTPException(status_code=400, detail="Please upload an image file.")
 
     image_bytes = await file.read()
+
+    # ── Step 2: Plant / Agriculture image guard (pre-flight AI check) ────────
+    # Ask Gemini one quick YES/NO question before running the full diagnosis.
+    # If the image is not a plant, crop, or leaf, return HTTP 422 immediately.
+    is_plant = check_is_plant(image_bytes, file.content_type)
+    if not is_plant:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "This image does not appear to be a plant, crop, or leaf photo. "
+                "Please upload a clear photo of a crop leaf, plant, or agricultural subject "
+                "so Crop Doctor AI can diagnose it accurately."
+            ),
+        )
+
+    # ── Step 3: Full agricultural diagnosis ──────────────────────────────────
     report = call_gemini_vision(image_bytes, file.content_type)
 
     return {

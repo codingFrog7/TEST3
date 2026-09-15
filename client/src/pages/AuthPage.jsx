@@ -30,6 +30,7 @@ export default function AuthPage({ mode = "login" }) {
     signUpWithEmail,
     sendPasswordReset,
     signOut,
+    signInAsGuest,
   } = useFirebase();
 
   const [isSignUp, setIsSignUp] = useState(mode === "signup");
@@ -394,6 +395,37 @@ export default function AuthPage({ mode = "login" }) {
                     )}
                   </button>
 
+                  {!isSignUp && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        signInAsGuest();
+                        navigate("/");
+                      }}
+                      style={{
+                        width: "100%",
+                        marginTop: "12px",
+                        padding: "14px",
+                        borderRadius: "12px",
+                        background: "#f1f5f9",
+                        color: "#475569",
+                        fontWeight: 600,
+                        fontSize: "15px",
+                        border: "1px solid #cbd5e1",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "8px",
+                        transition: "background 0.2s"
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = "#e2e8f0"}
+                      onMouseLeave={(e) => e.currentTarget.style.background = "#f1f5f9"}
+                    >
+                      <User size={18} /> Continue as Guest
+                    </button>
+                  )}
+
                   {/* Social Login Options (Side-by-side matching reference image) */}
                   <div className="auth-social-row">
                     <button
@@ -474,7 +506,7 @@ export default function AuthPage({ mode = "login" }) {
                 <div className="auth-security-strip">
                   <ShieldCheck
                     size={14}
-                    className="text-emerald-500 shrink-0"
+                    className="text-[#01520F] dark:text-[#B6F022] shrink-0"
                   />
                   <span>
                     Encrypted Firebase Cloud Storage · 100% Free Tier for
@@ -485,60 +517,43 @@ export default function AuthPage({ mode = "login" }) {
             )}
           </section>
 
-          {/* Right Column: High Aesthetic Agricultural Hero Landscape (Matching Reference) */}
+          {/* Right Column: Sprout Eco Capital Brand Identity Showcase */}
           <section className="auth-visual-column" aria-hidden="true">
             <div className="auth-landscape-card">
-              <img
-                src="https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=85"
-                alt="Lush rolling green farm hills under bright sky"
-                className="auth-landscape-image"
-                referrerPolicy="no-referrer"
-              />
-
-              {/* Atmospheric Gradient Scrim */}
-              <div className="auth-landscape-scrim" />
+              {/* Brand Logo Hero Presentation Replacing Old Stock Photo */}
+              <div className="auth-landscape-logo-backdrop">
+                <div className="auth-logo-ambient-glow" aria-hidden="true" />
+                <div className="auth-logo-center-stage">
+                  <div className="auth-logo-emblem-halo">
+                    <img
+                      src="/brand-logo.png"
+                      alt="AGRO SATHI Official Brand Logo"
+                      className="auth-hero-brand-logo"
+                    />
+                  </div>
+                  <div className="auth-hero-logo-title-group">
+                    <div className="auth-hero-brand-title">
+                      <span className="auth-hero-brand-agro">AGRO</span>
+                      <span className="auth-hero-brand-sathi">SATHI</span>
+                    </div>
+                    <span className="auth-hero-pill-badge">
+                      Neo-Organic Agricultural Intelligence
+                    </span>
+                  </div>
+                </div>
+              </div>
 
               {/* Floating Header Badge */}
-              <div className="auth-landscape-top-badge" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <div
+                className="auth-landscape-top-badge"
+                style={{ display: "flex", alignItems: "center", gap: "8px" }}
+              >
                 <img
                   src="/agro-sathi-icon.png"
                   alt="AGRO SATHI"
                   style={{ width: "20px", height: "20px", borderRadius: "5px" }}
                 />
                 <span>AGRO SATHI Kisan Platform</span>
-              </div>
-
-              {/* Bottom Editorial Card with Live Agri Cues */}
-              <div className="auth-landscape-bottom-card">
-                <div className="auth-quote-tag">
-                  <Sparkles size={13} className="text-lime-300" />
-                  <span>Precision AI for Bharat&apos;s Fields</span>
-                </div>
-                <h3 className="auth-landscape-heading">
-                  Healthier Crops, Higher Yields &amp; Direct Mandi Insights.
-                </h3>
-                <p className="auth-landscape-sub">
-                  Instant smartphone leaf diagnostics, integrated pest
-                  management remedies, and real-time APMC market prices.
-                </p>
-
-                {/* 3 Metric Pills */}
-                <div className="auth-metrics-row">
-                  <div className="auth-metric-pill">
-                    <strong>98.4%</strong>
-                    <small>Model Accuracy</small>
-                  </div>
-                  <div className="auth-metric-divider" />
-                  <div className="auth-metric-pill">
-                    <strong>15+ States</strong>
-                    <small>APMC Mandis</small>
-                  </div>
-                  <div className="auth-metric-divider" />
-                  <div className="auth-metric-pill">
-                    <strong>24/7</strong>
-                    <small>Offline Scout Mode</small>
-                  </div>
-                </div>
               </div>
             </div>
           </section>
@@ -560,7 +575,10 @@ export default function AuthPage({ mode = "login" }) {
           >
             <div className="auth-modal-header">
               <div className="auth-modal-icon">
-                <Mail size={20} className="text-emerald-600" />
+                <Mail
+                  size={20}
+                  className="text-[#01520F] dark:text-[#B6F022]"
+                />
               </div>
               <button
                 type="button"

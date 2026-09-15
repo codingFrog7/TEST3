@@ -22,7 +22,12 @@ export default function NotFound() {
         <img
           src="/agro-sathi-icon.png"
           alt="AGRO SATHI"
-          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            display: "block",
+          }}
         />
       </div>
       <span className="eyebrow">AGRO SATHI</span>

@@ -33,6 +33,7 @@ import {
   Heart,
   MoreVertical,
   Send,
+  Mail,
   Minus,
   Plus,
   User,
@@ -56,6 +57,9 @@ import {
   Database,
   TrendingUp,
   Coins,
+  Info,
+  Brain,
+  Eye,
 } from "lucide-react";
 
 import { useFirebase } from "../context/FirebaseContext.jsx";
@@ -259,73 +263,72 @@ function Header({ page }) {
 
 function Footer() {
   return (
-    <footer className="site-footer" id="site-footer">
-      <div className="footer-inner-container">
-        <div className="footer-main-grid">
+    <footer className="bg-[#eff0eb] text-slate-900 border-t-4 border-slate-900 mt-20 pt-16 pb-8 font-sans" id="site-footer">
+      <div className="w-full max-w-6xl mx-auto px-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
           {/* Brand & Kisan Helpline Column */}
-          <div className="footer-brand-col">
-            <div className="footer-brand-header">
-              <AgroSathiLogo size="md" inverted={true} />
+          <div className="lg:col-span-2 flex flex-col items-start">
+            <div className="mb-6">
+              <AgroSathiLogo size="md" inverted={false} />
             </div>
-            <p className="footer-mission-text">
+            <p className="text-slate-700 font-bold mb-8 max-w-md leading-relaxed text-lg">
               Real-time crop disease diagnosis, precision agromet advisories,
               and live mandi market prices for Indian farmers.
             </p>
-            <div className="footer-helpline-card">
-              <div className="footer-helpline-badge">
-                <Phone size={13} className="text-emerald-400" />
-                <span>Kisan Call Centre (Govt. of India)</span>
+            <div className="bg-white border-4 border-slate-900 rounded-xl p-5 shadow-[4px_4px_0px_0px_#0f172a]">
+              <div className="inline-flex items-center gap-2 bg-[#b6f022] text-slate-900 px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest mb-3 border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a]">
+                <Phone size={13} className="text-slate-900" />
+                <span>Kisan Call Centre</span>
               </div>
               <a
                 href="tel:18001801551"
-                className="footer-helpline-phone"
-                id="footer-kisan-helpline-link"
+                className="block text-3xl font-black text-slate-900 hover:text-[#64b60a] transition-colors mb-1"
               >
                 1800-180-1551
               </a>
-              <span className="footer-helpline-hours">
-                Toll-Free Helpline · 6:00 AM – 10:00 PM Daily
+              <span className="text-sm font-black text-slate-500 uppercase tracking-wide">
+                Govt. of India · 6:00 AM – 10:00 PM Daily
               </span>
             </div>
           </div>
 
           {/* Navigation Column 1: Agronomy Services */}
-          <div className="footer-nav-col">
-            <h4 className="footer-col-title">Farming Services</h4>
-            <ul className="footer-col-links">
+          <div>
+            <h4 className="text-slate-900 font-black text-lg mb-6 uppercase tracking-widest border-b-4 border-slate-900 inline-block pb-1">Farming Services</h4>
+            <ul className="flex flex-col gap-4 font-black text-slate-700">
               <li>
-                <Link href="/detect">Crop Disease Doctor</Link>
+                <Link href="/detect" className="hover:text-slate-900 hover:translate-x-1 inline-block transition-transform">Crop Disease Doctor</Link>
               </li>
               <li>
-                <Link href="/mandi">Mandi Bhav Today</Link>
+                <Link href="/mandi" className="hover:text-slate-900 hover:translate-x-1 inline-block transition-transform">Mandi Bhav Today</Link>
               </li>
               <li>
-                <Link href="/weather">Weather & Spray Desk</Link>
+                <Link href="/weather" className="hover:text-slate-900 hover:translate-x-1 inline-block transition-transform">Weather & Spray Desk</Link>
               </li>
               <li>
-                <Link href="/detect">AI Instant Diagnosis</Link>
+                <Link href="/detect" className="hover:text-slate-900 hover:translate-x-1 inline-block transition-transform">AI Instant Diagnosis</Link>
               </li>
             </ul>
           </div>
 
           {/* Navigation Column 2: Portals & Help */}
-          <div className="footer-nav-col">
-            <h4 className="footer-col-title">Farmer Portals</h4>
-            <ul className="footer-col-links">
+          <div>
+            <h4 className="text-slate-900 font-black text-lg mb-6 uppercase tracking-widest border-b-4 border-slate-900 inline-block pb-1">Farmer Portals</h4>
+            <ul className="flex flex-col gap-4 font-black text-slate-700">
               <li>
-                <Link href="/user">My Field Diary</Link>
+                <Link href="/user" className="hover:text-slate-900 hover:translate-x-1 inline-block transition-transform">My Field Diary</Link>
               </li>
               <li>
-                <Link href="/about">About AGRO SATHI</Link>
+                <Link href="/about" className="hover:text-slate-900 hover:translate-x-1 inline-block transition-transform">About AGRO SATHI</Link>
               </li>
               <li>
                 <a
                   href="https://mausam.imd.gov.in/responsive/agromet_adv_ser_state_current.php"
                   target="_blank"
                   rel="noreferrer"
-                  className="footer-external-link"
+                  className="flex items-center gap-2 hover:text-slate-900 hover:translate-x-1 transition-transform"
                 >
-                  IMD Agromet Weather <ExternalLink size={12} />
+                  IMD Agromet Weather <ExternalLink size={14} />
                 </a>
               </li>
               <li>
@@ -333,26 +336,38 @@ function Footer() {
                   href="https://enam.gov.in"
                   target="_blank"
                   rel="noreferrer"
-                  className="footer-external-link"
+                  className="flex items-center gap-2 hover:text-slate-900 hover:translate-x-1 transition-transform"
                 >
-                  e-NAM Mandi Portal <ExternalLink size={12} />
+                  e-NAM Mandi Portal <ExternalLink size={14} />
                 </a>
               </li>
             </ul>
           </div>
         </div>
 
-        {/* Clean, Simple Bottom Bar */}
-        <div className="footer-bottom-bar">
-          <div className="footer-copyright-wrap">
-            <span>© 2026 AGRO SATHI · Dedicated to Indian Farmers</span>
+        {/* Bottom Bar */}
+        <div className="flex flex-col gap-6 pt-8 border-t-4 border-slate-900">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm font-black text-slate-600">
+            <div>
+              <span>© 2026 AGRO SATHI · Dedicated to Indian Farmers</span>
+            </div>
+            <div className="text-center md:text-right">
+              <span>
+                Advisory is for guidance. Follow local KVK advice for chemical spraying.
+              </span>
+            </div>
           </div>
-
-          <div className="footer-disclaimer-wrap">
-            <span>
-              Advisory is for guidance. Follow local Krishi Vigyan Kendra (KVK)
-              advice for chemical spraying.
-            </span>
+          
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-3 pt-6 border-t-2 border-slate-300">
+            <span className="font-black text-xl text-slate-900 tracking-widest uppercase">Team Froggers</span>
+            <span className="hidden sm:inline text-slate-400">|</span>
+            <a 
+              href="mailto:contact@teamfroggers.com" 
+              className="flex items-center gap-2 px-3 py-1.5 bg-white border-2 border-slate-900 rounded-lg shadow-[2px_2px_0px_0px_#0f172a] hover:translate-y-0.5 hover:shadow-[1px_1px_0px_0px_#0f172a] active:translate-y-1 active:shadow-none transition-all text-slate-900 font-bold"
+            >
+              <Mail size={16} className="text-red-500" />
+              <span>Contact via Gmail</span>
+            </a>
           </div>
         </div>
       </div>
@@ -640,7 +655,7 @@ function HomePage() {
       if (user) {
         await addFieldNote({
           note: fieldNote.trim(),
-          cropTag: "Chilli Teja",
+          cropTag: "Field Advisory",
           authorName: user.displayName || "Kisan Farmer",
         });
       }
@@ -794,12 +809,12 @@ function HomePage() {
                 <div className="detail-hero-stage">
                   <img
                     src="https://images.unsplash.com/photo-1592417817098-8f3d69109853?auto=format&fit=crop&w=600&q=80"
-                    alt="Chilli Leaf Curl Sample"
+                    alt="Crop Leaf Scan"
                     className="detail-hero-leaf-img"
                   />
                   <div className="detail-stage-overlay-badge">
                     <Sparkles size={13} />
-                    <span>AI Confidence 94.8% · Chilli Teja</span>
+                    <span>AI Confidence 94.8% · Disease Assessment</span>
                   </div>
                 </div>
 
@@ -820,7 +835,7 @@ function HomePage() {
 
                   <div className="detail-title-row">
                     <h2 className="detail-crop-title">
-                      Chilli Leaf Curl (Gemini)
+                      Leaf Pathology Diagnosis
                     </h2>
                   </div>
 
@@ -921,14 +936,6 @@ function HomePage() {
                       type="button"
                       className="detail-docked-action-btn"
                       onClick={() => {
-                        sessionStorage.setItem(
-                          "agro_pending_scan",
-                          "https://images.unsplash.com/photo-1592417817098-8f3d69109853?auto=format&fit=crop&w=600&q=80"
-                        );
-                        sessionStorage.setItem(
-                          "agro_pending_scan_name",
-                          "Chilli Leaf Sample"
-                        );
                         navigate("/detect");
                       }}
                     >
@@ -940,89 +947,53 @@ function HomePage() {
               </div>
             </section>
           ) : (
-            /* RENDER BENTO GRID MODULES */
-            <section className="bento-overview-section">
-              {/* Header Typography */}
-              <div className="bento-hero-header">
-                <h2 className="bento-main-title">Smart Kisan Services</h2>
-                <p className="bento-sub-title">
-                  Instant crop diagnosis, live APMC mandi rates &amp; 5-day
-                  weather desk
-                </p>
-              </div>
-
-              {/* Bento Grid 2x2 Layout */}
-              <div className="bento-cards-grid">
-                {/* CARD 1: Large Vertical Card (AI Leaf Camera) */}
-                <div
-                  className="bento-card-camera"
-                  onClick={() => heroCameraRef.current?.click()}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={e => {
-                    if (e.key === "Enter") heroCameraRef.current?.click();
-                  }}
-                  title="Open camera to scan plant leaf"
-                >
-                  <span className="bento-tag-badge">AI Leaf Camera</span>
-
-                  <div className="bento-camera-visual">
-                    <BentoCameraSvg />
-                  </div>
-
-                  <div className="bento-camera-footer">
-                    <h3 className="bento-camera-title">Scan Plant Leaf</h3>
-                    <p className="bento-camera-sub">
-                      Instant diagnosis for fungal spots, pests &amp; curl
-                    </p>
-                    <button
-                      type="button"
-                      className="bento-pill-action"
-                      onClick={e => {
-                        e.stopPropagation();
-                        openCameraMenu();
-                      }}
-                      id="bento-tap-to-scan-btn"
-                    >
-                      <Camera size={16} strokeWidth={2.4} />
-                      <span>Tap to Scan</span>
+            /* RENDER INFORMATIONAL SECTION (Neo-Brutalist Layout) */
+            <section className="agro-neo-info">
+              <h2 className="neo-main-title">How it works</h2>
+              
+              <div className="neo-steps-container">
+                {/* Step 1 */}
+                <div className="neo-step-row">
+                  <div className="neo-step-text">
+                    <h3>1. Snap a photo of your leaf</h3>
+                    <p>The smartest AI assistant will analyze the leaf for any visual symptoms of diseases or pests. Available directly on your phone.</p>
+                    <button className="neo-btn-primary" onClick={() => {
+                      const trig = document.getElementById("hero-main-camera-trigger");
+                      if (trig) trig.click();
+                      else heroCameraRef.current?.click();
+                    }}>
+                      Take a Photo
                     </button>
+                  </div>
+                  <div className="neo-step-image-wrap">
+                    <img src="/assets/step1.jpg" alt="Scan Leaf" />
                   </div>
                 </div>
 
-                {/* CARD 2: Mandi Bhav Card */}
-                <Link
-                  href="/mandi"
-                  className="bento-card-mandi"
-                  title="Live Mandi Bhav APMC Rates"
-                >
-                  <div className="bento-mandi-visual-wrap">
-                    <BentoMandiSvg />
+                {/* Step 2 (Reversed) */}
+                <div className="neo-step-row reverse">
+                  <div className="neo-step-image-wrap">
+                    <img src="/assets/step2.jpg" alt="AI Dashboard" />
                   </div>
-                  <div>
-                    <h3 className="bento-mandi-label">Mandi Bhav</h3>
-                    <div className="bento-mandi-rate">Cotton ₹7,320 / qtl</div>
-                    <span className="mandi-badge-up">+₹220 vs MSP</span>
+                  <div className="neo-step-text">
+                    <h3>2. Instant AI Diagnosis</h3>
+                    <p>Click "Analyze" to run the image through our advanced crop pathology engine. See confidence scores and disease names in seconds.</p>
                   </div>
-                </Link>
+                </div>
 
-                {/* CARD 3: Weather Desk Card */}
-                <Link
-                  href="/weather"
-                  className="bento-card-weather"
-                  title="5-Day Weather & Spray Window"
-                >
-                  <div className="bento-weather-visual-wrap">
-                    <BentoWeatherSvg />
+                {/* Step 3 */}
+                <div className="neo-step-row">
+                  <div className="neo-step-text">
+                    <h3>3. Get Actionable Remedies</h3>
+                    <p>Receive immediate chemical and organic treatment plans directly on your phone, preventing further crop loss.</p>
+                    <Link href="/about" className="neo-btn-secondary">
+                      Learn more
+                    </Link>
                   </div>
-                  <div>
-                    <h3 className="bento-weather-label">Weather Desk</h3>
-                    <div className="bento-weather-stat">31°C · Clear Sky</div>
-                    <span className="weather-badge-safe">
-                      Spray Window Open
-                    </span>
+                  <div className="neo-step-image-wrap">
+                    <img src="/assets/step3.jpg" alt="Treatment list" />
                   </div>
-                </Link>
+                </div>
               </div>
             </section>
           )}
@@ -1163,199 +1134,679 @@ function GuidesPage() {
   );
 }
 
+// ─── AI Weather Desk ──────────────────────────────────────────────────────────
+const WMO_CODES = {
+  0: { label: "Clear Sky", icon: Sun },
+  1: { label: "Mainly Clear", icon: Sun },
+  2: { label: "Partly Cloudy", icon: CloudSun },
+  3: { label: "Overcast", icon: Cloud },
+  45: { label: "Foggy", icon: Cloud },
+  48: { label: "Icy Fog", icon: Cloud },
+  51: { label: "Light Drizzle", icon: CloudRain },
+  53: { label: "Drizzle", icon: CloudRain },
+  55: { label: "Heavy Drizzle", icon: CloudRain },
+  61: { label: "Light Rain", icon: CloudRain },
+  63: { label: "Rain", icon: CloudRain },
+  65: { label: "Heavy Rain", icon: CloudRain },
+  71: { label: "Light Snow", icon: Cloud },
+  73: { label: "Snow", icon: Cloud },
+  75: { label: "Heavy Snow", icon: Cloud },
+  80: { label: "Rain Showers", icon: CloudRain },
+  81: { label: "Rain Showers", icon: CloudRain },
+  82: { label: "Violent Showers", icon: CloudRain },
+  95: { label: "Thunderstorm", icon: CloudRain },
+  96: { label: "Thunderstorm+Hail", icon: CloudRain },
+  99: { label: "Heavy Thunderstorm", icon: CloudRain },
+};
+
+const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTH_NAMES = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+function getWindDir(deg) {
+  const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  return dirs[Math.round(deg / 45) % 8];
+}
+
 function WeatherPage() {
-  const [state, setState] = useState("Telangana");
-  const [scenarioId, setScenarioId] = useState("forecast");
-  const currentDays = weatherScenarios[scenarioId]?.days || weatherDays;
-  const todayWeather = currentDays[0] || weatherDays[0];
+  const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 
-  return (
-    <main className="page-width page-shell">
-      <PageIntro
-        eyebrow="Weather desk"
-        title="The next five days, in field language."
-        body="Use the forecast to decide when to irrigate, scout, weed or wait. The numbers below are a clear demo view; always check your local IMD bulletin before a high-stakes decision."
-      >
-        <div className="location-picker">
-          <MapPinIcon />
-          <span>
-            <small>YOUR REGION</small>
-            <b>Karimnagar, {state}</b>
-          </span>
-          <ChevronDown size={15} />
+  // ── Helpers ────────────────────────────────────────────────────
+  const loadCache = key => {
+    try {
+      const s = localStorage.getItem(key);
+      return s ? JSON.parse(s) : null;
+    } catch {
+      return null;
+    }
+  };
+  const saveCache = (key, value) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch {}
+  };
+  const clearCache = () => {
+    ["wd_coords", "wd_location", "wd_weather", "wd_advice"].forEach(k => {
+      try {
+        localStorage.removeItem(k);
+      } catch {}
+    });
+  };
+
+  // ── Restore from cache on mount ────────────────────────────────
+  const savedCoords = loadCache("wd_coords");
+  const cachedWeatherRaw = loadCache("wd_weather");
+  const isCacheValid =
+    cachedWeatherRaw &&
+    Date.now() - (cachedWeatherRaw.savedAt || 0) < CACHE_TTL;
+
+  // Re-attach icon functions (can't serialize functions to JSON)
+  const hydrateWeather = raw => {
+    if (!raw) return null;
+    return {
+      ...raw,
+      days: raw.days.map(d => ({ ...d, icon: WMO_CODES[d.code]?.icon || Sun })),
+    };
+  };
+
+  const [geoState, setGeoState] = useState(savedCoords ? "granted" : "idle");
+  const [coords, setCoords] = useState(savedCoords);
+  const [locationName, setLocationName] = useState(() => {
+    try {
+      return localStorage.getItem("wd_location") || "";
+    } catch {
+      return "";
+    }
+  });
+  const [weather, setWeather] = useState(() =>
+    isCacheValid ? hydrateWeather(cachedWeatherRaw) : null
+  );
+  const [loadingWeather, setLoadingWeather] = useState(false);
+  const [aiAdvice, setAiAdvice] = useState(() => {
+    const fallbackAdvice = "• Keep field bunds clean to prevent pest breeding and reduce disease spread.\n• Spray pesticides in the early morning to avoid evaporation and leaf burn.\n• Monitor crop weekly for early signs of disease or nutrient deficiency.";
+    if (!isCacheValid) return fallbackAdvice;
+    try {
+      return localStorage.getItem("wd_advice") || fallbackAdvice;
+    } catch {
+      return fallbackAdvice;
+    }
+  });
+  const [loadingAi, setLoadingAi] = useState(false);
+  const [selectedDay, setSelectedDay] = useState(0);
+  const [cacheAge, setCacheAge] = useState(() =>
+    isCacheValid
+      ? Math.round((Date.now() - cachedWeatherRaw.savedAt) / 60000)
+      : null
+  );
+  const [aiSlideIndex, setAiSlideIndex] = useState(0);
+
+  useEffect(() => {
+    if (!aiAdvice) return;
+    const lines = aiAdvice.split("\n").filter(l => l.trim());
+    if (lines.length <= 1) return;
+    const interval = setInterval(() => {
+      setAiSlideIndex(prev => (prev + 1) % lines.length);
+    }, 4500);
+    return () => clearInterval(interval);
+  }, [aiAdvice]);
+
+  // ── Geolocation request ────────────────────────────────────────
+  const requestLocation = (forceRefresh = false) => {
+    setGeoState("loading");
+    setWeather(null);
+    setAiAdvice("");
+    setSelectedDay(0);
+    setCacheAge(null);
+    if (!navigator.geolocation) {
+      setGeoState("denied");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const c = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+        setCoords(c);
+        setGeoState("granted");
+        saveCache("wd_coords", c);
+      },
+      () => setGeoState("denied"),
+      { timeout: 10000, maximumAge: forceRefresh ? 0 : 300000 }
+    );
+  };
+
+  // ── Fetch weather (skips if cache is still valid) ──────────────
+  useEffect(() => {
+    if (!coords) return;
+    // If cache is fresh and we already have weather, skip the fetch
+    if (isCacheValid && weather) return;
+
+    setLoadingWeather(true);
+    const { lat, lon } = coords;
+
+    Promise.all([
+      fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=en`,
+        {
+          headers: { "Accept-Language": "en" },
+        }
+      )
+        .then(r => r.json())
+        .catch(() => null),
+      fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+          `&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max,windspeed_10m_max,winddirection_10m_dominant,uv_index_max` +
+          `&hourly=relativehumidity_2m` +
+          `&current_weather=true&timezone=auto&forecast_days=7`
+      ).then(r => r.json()),
+    ])
+      .then(([geo, wx]) => {
+        // Location name
+        if (geo?.address) {
+          const a = geo.address;
+          const city =
+            a.city || a.town || a.village || a.county || a.state_district || "";
+          const state = a.state || "";
+          const name = city ? `${city}, ${state}` : state || "Your Location";
+          const isLatin = /^[\u0000-\u024F\s,.'"-]+$/.test(name);
+          const finalName = isLatin ? name : geo.name || "Your Location";
+          setLocationName(finalName);
+          try {
+            localStorage.setItem("wd_location", finalName);
+          } catch {}
+        }
+
+        // Parse weather
+        if (wx?.daily) {
+          const d = wx.daily;
+          const cw = wx.current_weather;
+          const days = d.time.map((time, i) => {
+            const code = d.weathercode[i];
+            const meta = WMO_CODES[code] || { label: "Unknown", icon: Sun };
+            const dateObj = new Date(time);
+            return {
+              time,
+              dayName:
+                i === 0
+                  ? "Today"
+                  : i === 1
+                    ? "Tomorrow"
+                    : DAY_NAMES[dateObj.getDay()],
+              dateStr: `${dateObj.getDate()} ${MONTH_NAMES[dateObj.getMonth()]}`,
+              icon: meta.icon, // kept in memory only
+              label: meta.label,
+              high: Math.round(d.temperature_2m_max[i]),
+              low: Math.round(d.temperature_2m_min[i]),
+              rain: d.precipitation_probability_max[i] ?? 0,
+              wind: Math.round(d.windspeed_10m_max[i]),
+              windDir: getWindDir(d.winddirection_10m_dominant[i] ?? 0),
+              uv: d.uv_index_max[i] ?? 0,
+              code,
+            };
+          });
+
+          const todayHumidityVals =
+            wx.hourly?.relativehumidity_2m?.slice(0, 24) || [];
+          const avgHumidity = todayHumidityVals.length
+            ? Math.round(
+                todayHumidityVals.reduce((a, b) => a + b, 0) /
+                  todayHumidityVals.length
+              )
+            : null;
+
+          const wxObj = {
+            days,
+            currentTemp: cw ? Math.round(cw.temperature) : null,
+            currentCode: cw?.weathercode ?? 0,
+            humidity: avgHumidity,
+            timezone: wx.timezone,
+          };
+          setWeather(wxObj);
+          setCacheAge(0);
+
+          // Persist to localStorage (strip icon functions before serialising)
+          const serialisable = {
+            ...wxObj,
+            days: days.map(({ icon: _icon, ...rest }) => rest),
+            savedAt: Date.now(),
+          };
+          saveCache("wd_weather", serialisable);
+
+          fetchAiAdvice(days[0], avgHumidity);
+        }
+        setLoadingWeather(false);
+      })
+      .catch(() => setLoadingWeather(false));
+  }, [coords]);
+
+  const fetchAiAdvice = async (today, humidity) => {
+    setLoadingAi(true);
+    setAiAdvice("");
+    try {
+      const prompt = `You are an expert Indian agricultural advisor. Based on the following real-time weather data for a farmer's location, provide 3 concise, practical field advisory points in simple English. Each point must be actionable and specific to this weather.
+
+Weather Today:
+- Condition: ${today.label}
+- High: ${today.high}°C, Low: ${today.low}°C
+- Rain Probability: ${today.rain}%
+- Wind: ${today.wind} km/h from ${today.windDir}
+- UV Index: ${today.uv}
+${humidity ? `- Humidity: ${humidity}%` : ""}
+
+Format: Give exactly 3 bullet points starting with "•". Each bullet should be 1-2 sentences. Be practical and farmer-friendly. No greetings or headings.`;
+
+      const fd = new FormData();
+      fd.append("question", prompt);
+      const res = await fetch("/api/python/ask", { method: "POST", body: fd });
+      const data = await res.json();
+      const text = data.answer || data.response || data.text || "";
+      const trimmed = text.trim();
+      setAiAdvice(trimmed);
+      // Cache advice alongside weather
+      try {
+        localStorage.setItem("wd_advice", trimmed);
+      } catch {}
+    } catch {
+      setAiAdvice(
+        "• Scout your fields in the early morning when dew has dried.\n• Check soil moisture before irrigating — avoid waterlogging.\n• Monitor weather updates and plan spray windows carefully."
+      );
+    }
+    setLoadingAi(false);
+  };
+
+  const today = weather?.days?.[selectedDay];
+  const WeatherIcon = today ? WMO_CODES[today.code]?.icon || Sun : Sun;
+
+  // ── States ──────────────────────────────────────────────────────────────────
+  if (geoState === "idle") {
+    return (
+      <main className="page-width page-shell">
+        <div className="wd-permission-screen">
+          <div className="wd-permission-card">
+            <div className="wd-permission-icon-ring">
+              <Navigation size={32} />
+            </div>
+            <h1 className="wd-permission-title">AI Weather Desk</h1>
+            <p className="wd-permission-body">
+              Get real-time hyperlocal weather data and AI-generated field
+              advisory tailored to your exact location — updated live.
+            </p>
+            <button
+              id="weather-location-btn"
+              className="wd-allow-btn"
+              onClick={requestLocation}
+            >
+              <Navigation size={16} />
+              Allow Location Access
+            </button>
+            <p className="wd-permission-note">
+              Location stays on your device and is never stored.
+            </p>
+          </div>
         </div>
-      </PageIntro>
+      </main>
+    );
+  }
 
-      {/* Dynamic Extreme Weather Alert Bar */}
-      <WeatherAlertBar
-        days={currentDays}
-        onScenarioChange={setScenarioId}
-        activeScenarioId={scenarioId}
-      />
+  if (
+    geoState === "loading" ||
+    (geoState === "granted" && loadingWeather && !weather)
+  ) {
+    return (
+      <main className="page-width page-shell">
+        <div className="wd-permission-screen">
+          <div className="wd-loading-card">
+            <div className="wd-spinner" />
+            <p className="wd-loading-label">
+              {geoState === "loading"
+                ? "Detecting your location…"
+                : "Fetching live weather data…"}
+            </p>
+            {locationName ? (
+              <p className="wd-loading-sublabel">{locationName}</p>
+            ) : null}
+          </div>
+        </div>
+      </main>
+    );
+  }
 
-      <div className="weather-controls">
-        <label>
-          State{" "}
-          <select value={state} onChange={e => setState(e.target.value)}>
-            <option>Telangana</option>
-            <option>Maharashtra</option>
-            <option>Karnataka</option>
-            <option>Andhra Pradesh</option>
-          </select>
-        </label>
+  if (geoState === "denied") {
+    return (
+      <main className="page-width page-shell">
+        <div className="wd-permission-screen">
+          <div className="wd-permission-card wd-denied">
+            <div className="wd-permission-icon-ring denied">
+              <AlertTriangle size={28} />
+            </div>
+            <h2 className="wd-permission-title">Location Access Denied</h2>
+            <p className="wd-permission-body">
+              Please allow location access in your browser settings to get live
+              weather data for your field.
+            </p>
+            <button className="wd-allow-btn" onClick={requestLocation}>
+              <RotateCcw size={16} />
+              Try Again
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // ── Main Weather UI ─────────────────────────────────────────────────────────
+  return (
+    <main className="page-width page-shell wd-root">
+      {/* Header */}
+      <div className="wd-header">
+        <div className="wd-header-left">
+          <span className="wd-eyebrow">
+            <span className="wd-live-dot" />
+            LIVE · AI WEATHER DESK
+          </span>
+          <h1 className="wd-title">{locationName || "Your Location"}</h1>
+          {today && (
+            <p className="wd-subtitle">
+              {today.dateStr} ·{" "}
+              {cacheAge === null || cacheAge === 0
+                ? "Updated just now"
+                : cacheAge === 1
+                  ? "Updated 1 min ago"
+                  : `Updated ${cacheAge} min ago`}
+            </p>
+          )}
+        </div>
+        <div className="wd-header-actions">
+          <button
+            className="wd-refresh-btn"
+            onClick={() => requestLocation(true)}
+            title="Refresh live weather"
+          >
+            <RotateCcw size={15} />
+            Refresh
+          </button>
+          <button
+            className="wd-change-btn"
+            onClick={() => {
+              clearCache();
+              setCoords(null);
+              setWeather(null);
+              setAiAdvice("");
+              setLocationName("");
+              setSelectedDay(0);
+              setCacheAge(null);
+              setGeoState("idle");
+            }}
+            title="Change location"
+          >
+            <Navigation size={13} />
+            Change
+          </button>
+        </div>
+      </div>
+
+      {/* Hero weather card */}
+      {today && (
+        <div className="wd-hero-grid">
+          {/* Current conditions */}
+          <div className="wd-current-card">
+            <div className="wd-current-top">
+              <div className="wd-temp-block">
+                <WeatherIcon
+                  size={52}
+                  strokeWidth={1.4}
+                  className="wd-main-icon"
+                />
+                <div className="wd-temp-nums">
+                  <span className="wd-temp-now">
+                    {weather.currentTemp ?? today.high}°
+                  </span>
+                  <span className="wd-temp-range">
+                    <span className="wd-temp-hi">↑{today.high}°</span>
+                    <span className="wd-temp-lo">↓{today.low}°</span>
+                  </span>
+                </div>
+              </div>
+              <div className="wd-condition-label">{today.label}</div>
+            </div>
+            <div className="wd-stats-row">
+              <div className="wd-stat">
+                <Droplets size={14} className="wd-stat-icon rain" />
+                <span className="wd-stat-val">{today.rain}%</span>
+                <span className="wd-stat-name">Rain chance</span>
+              </div>
+              <div className="wd-stat">
+                <Wind size={14} className="wd-stat-icon wind" />
+                <span className="wd-stat-val">{today.wind} km/h</span>
+                <span className="wd-stat-name">{today.windDir} wind</span>
+              </div>
+              {weather.humidity !== null && (
+                <div className="wd-stat">
+                  <ThermometerSun size={14} className="wd-stat-icon uv" />
+                  <span className="wd-stat-val">{weather.humidity}%</span>
+                  <span className="wd-stat-name">Humidity</span>
+                </div>
+              )}
+              <div className="wd-stat">
+                <Sun size={14} className="wd-stat-icon uv" />
+                <span className="wd-stat-val">{today.uv}</span>
+                <span className="wd-stat-name">UV Index</span>
+              </div>
+            </div>
+          </div>
+
+          {/* AI Field Advisory */}
+          <div className="wd-ai-card">
+            <div className="wd-ai-header">
+              <Sparkles size={15} className="wd-ai-sparkle" />
+              <span>AI Field Advisory</span>
+            </div>
+            {loadingAi ? (
+              <div className="wd-ai-loading">
+                <div className="wd-ai-spinner" />
+                <span>Generating advice for your conditions…</span>
+              </div>
+            ) : aiAdvice ? (
+              <div className="wd-ai-carousel" style={{ position: "relative", minHeight: "90px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                <div style={{ position: "relative", flex: 1 }}>
+                  {aiAdvice
+                    .split("\n")
+                    .filter(l => l.trim())
+                    .map((line, i) => (
+                      <div 
+                        key={i} 
+                        className="wd-ai-item"
+                        style={{
+                          position: i === aiSlideIndex ? "relative" : "absolute",
+                          top: 0,
+                          left: 0,
+                          width: "100%",
+                          opacity: i === aiSlideIndex ? 1 : 0,
+                          transform: i === aiSlideIndex ? "translateY(0) scale(1)" : "translateY(15px) scale(0.98)",
+                          transition: "all 0.6s cubic-bezier(0.22, 1, 0.36, 1)",
+                          pointerEvents: i === aiSlideIndex ? "auto" : "none",
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: "8px"
+                        }}
+                      >
+                        <span className="wd-ai-bullet" style={{ flexShrink: 0, marginTop: "6px" }} />
+                        <span style={{ lineHeight: 1.5 }}>{line.replace(/^[•\-\*]\s*/, "")}</span>
+                      </div>
+                    ))}
+                </div>
+                <div className="wd-ai-dots" style={{ display: "flex", gap: "5px", marginTop: "14px" }}>
+                  {aiAdvice.split("\n").filter(l => l.trim()).map((_, i) => (
+                    <div 
+                      key={i} 
+                      style={{
+                        width: "6px", 
+                        height: "6px", 
+                        borderRadius: "50%", 
+                        background: i === aiSlideIndex ? "var(--lime-leaf, #64b60a)" : "rgba(100, 182, 10, 0.2)",
+                        transition: "all 0.3s ease",
+                        cursor: "pointer",
+                        transform: i === aiSlideIndex ? "scale(1.2)" : "scale(1)"
+                      }}
+                      onClick={() => setAiSlideIndex(i)}
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="wd-ai-empty">Advice unavailable</p>
+            )}
+            <div className="wd-ai-footer">
+              <Sparkles size={11} />
+              <span>Powered by Gemini AI · Based on live conditions</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 7-Day Forecast */}
+      {weather?.days && (
+        <section className="wd-forecast-section">
+          <div className="wd-section-head">
+            <span className="wd-eyebrow">7-DAY OUTLOOK</span>
+            <h2 className="wd-section-title">Plan your week</h2>
+          </div>
+          <div className="wd-forecast-strip">
+            {weather.days.map((day, i) => {
+              const DayIcon = day.icon;
+              const isSelected = i === selectedDay;
+              const isRainy = day.rain >= 50;
+              const isHot = day.high >= 38;
+              return (
+                <button
+                  key={day.time}
+                  className={`wd-forecast-day ${isSelected ? "selected" : ""} ${isRainy ? "rainy" : ""} ${isHot ? "hot" : ""}`}
+                  onClick={() => setSelectedDay(i)}
+                >
+                  <span className="wd-fday-name">{day.dayName}</span>
+                  <span className="wd-fday-date">{day.dateStr}</span>
+                  <DayIcon
+                    size={26}
+                    strokeWidth={1.5}
+                    className="wd-fday-icon"
+                  />
+                  <span className="wd-fday-hi">{day.high}°</span>
+                  <span className="wd-fday-lo">{day.low}°</span>
+                  <div className="wd-fday-rain">
+                    <Droplets size={11} />
+                    <span>{day.rain}%</span>
+                  </div>
+                  {isRainy && <span className="wd-fday-badge rain">Rain</span>}
+                  {isHot && !isRainy && (
+                    <span className="wd-fday-badge heat">Hot</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* Field Tasks based on selected day */}
+      {today && (
+        <section className="wd-tasks-section">
+          <div className="wd-section-head">
+            <span className="wd-eyebrow">FIELD TIMING</span>
+            <h2 className="wd-section-title">
+              {selectedDay === 0 ? "Today's" : `${today.dayName}'s`}{" "}
+              recommendations
+            </h2>
+          </div>
+          <div className="wd-task-grid">
+            {/* Spraying window */}
+            <div
+              className={`wd-task-card ${today.rain < 30 && today.wind < 20 ? "good" : "caution"}`}
+            >
+              <div className="wd-task-icon-wrap">
+                <FlaskConical size={20} />
+              </div>
+              <div className="wd-task-content">
+                <span className="wd-task-badge">
+                  {today.rain < 30 && today.wind < 20
+                    ? "✓ Good window"
+                    : "⚠ Caution"}
+                </span>
+                <h3>Spray Window</h3>
+                <p>
+                  {today.rain < 30 && today.wind < 20
+                    ? `Low rain chance (${today.rain}%) and manageable wind. Good time for foliar sprays early morning.`
+                    : today.rain >= 50
+                      ? `High rain probability (${today.rain}%). Avoid sprays — product will wash off.`
+                      : `Wind at ${today.wind} km/h. Wait for calmer conditions before spraying.`}
+                </p>
+              </div>
+            </div>
+            {/* Irrigation */}
+            <div
+              className={`wd-task-card ${today.rain >= 40 ? "caution" : "good"}`}
+            >
+              <div className="wd-task-icon-wrap">
+                <Droplets size={20} />
+              </div>
+              <div className="wd-task-content">
+                <span className="wd-task-badge">
+                  {today.rain >= 40
+                    ? "⚠ Hold irrigation"
+                    : "✓ Irrigate if needed"}
+                </span>
+                <h3>Irrigation</h3>
+                <p>
+                  {today.rain >= 40
+                    ? `Rain expected at ${today.rain}% probability. Check soil moisture first — skip irrigation if rain is coming.`
+                    : `Dry conditions expected. Monitor crop stress and irrigate in the cool morning hours.`}
+                </p>
+              </div>
+            </div>
+            {/* Scouting */}
+            <div className="wd-task-card good">
+              <div className="wd-task-icon-wrap">
+                <ScanLine size={20} />
+              </div>
+              <div className="wd-task-content">
+                <span className="wd-task-badge">✓ Recommended</span>
+                <h3>Field Scouting</h3>
+                <p>
+                  {today.high >= 35
+                    ? `Hot day (${today.high}°C). Scout in early morning before 8AM. Check for heat stress symptoms on leaves.`
+                    : today.rain >= 50
+                      ? `Post-rain scouting is important. Look for fungal signs, waterlogging, and soil erosion.`
+                      : `Ideal scouting weather. Walk field edges and check undersides of leaves for early pest signs.`}
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* IMD link footer */}
+      <div className="wd-footer-link">
+        <Info size={13} />
+        <span>Always cross-verify with the</span>
         <a
-          className="source-link dark"
           href="https://mausam.imd.gov.in/responsive/agromet_adv_ser_state_current.php"
           target="_blank"
           rel="noreferrer"
+          className="wd-imd-link"
         >
-          Open IMD agromet bulletins <ExternalLink size={12} />
+          IMD Agromet Advisory <ExternalLink size={11} />
         </a>
       </div>
-      <section className="weather-hero-card">
-        <div className="current-weather">
-          <span className="muted-label">TUESDAY, 08 SEPTEMBER</span>
-          <div className="temperature-row">
-            {todayWeather.icon ? (
-              <todayWeather.icon size={45} strokeWidth={1.5} />
-            ) : (
-              <Sun size={45} strokeWidth={1.5} />
-            )}
-            <strong>{todayWeather.high}</strong>
-            <span>
-              Low: {todayWeather.low}
-              <br />
-              <small>{todayWeather.label}</small>
-            </span>
-          </div>
-          <div className="current-weather-stats">
-            <span>
-              <Droplets size={15} /> {todayWeather.humidity || "58%"} humidity
-            </span>
-            <span>
-              <Wind size={15} /> {todayWeather.wind || "12 km/h"} wind
-            </span>
-            <span>
-              <ThermometerSun size={15} /> Rain prob: {todayWeather.rain}
-            </span>
-          </div>
-        </div>
-        <div className="field-callout">
-          <span className="callout-tag">
-            <Lightbulb size={13} /> TODAY'S FIELD NOTE
-          </span>
-          <h3>
-            {parseInt(todayWeather.rain, 10) >= 50
-              ? "Rain incoming — pause foliar feeding."
-              : parseInt(todayWeather.low, 10) <= 8
-                ? "Frost risk tonight — irrigate lightly."
-                : "Good window for scouting and weeding."}
-          </h3>
-          <p>
-            {parseInt(todayWeather.rain, 10) >= 50
-              ? "Ensure drainage lines are open. Postpone pesticide sprays until leaves can dry thoroughly."
-              : parseInt(todayWeather.low, 10) <= 8
-                ? "Low night temperatures slow crop metabolism. Evening furrow watering radiates protective ground warmth."
-                : "Keep foliar sprays for a dry, calm period. If rain arrives early, protect freshly worked soil from runoff."}
-          </p>
-          <Link href="/advisory" className="text-link">
-            See weather-linked advice <ChevronRight size={16} />
-          </Link>
-        </div>
-      </section>
-      <section className="forecast-section">
-        <div className="section-heading compact">
-          <div>
-            <span className="eyebrow">Forecast</span>
-            <h2>Plan the week</h2>
-          </div>
-          <span className="updated-label">
-            <span /> Updated a few minutes ago
-          </span>
-        </div>
-        <div className="forecast-large">
-          {currentDays.map(
-            ({ day, icon: Icon, high, low, rain, label }, index) => {
-              const rainVal = parseInt(rain, 10) || 0;
-              const lowVal = parseInt(low, 10) || 20;
-              return (
-                <div
-                  className={`forecast-large-day ${index === 0 ? "today" : ""} ${rainVal >= 50 ? "has-rain-alert" : ""
-                    } ${lowVal <= 8 ? "has-frost-alert" : ""}`}
-                  key={day}
-                >
-                  <span className="forecast-large-day-name">{day}</span>
-                  <Icon size={30} strokeWidth={1.6} />
-                  <strong>
-                    {high}
-                    <small>{low}</small>
-                  </strong>
-                  <span className="rain-prob">
-                    <Droplets size={12} /> {rain}
-                  </span>
-                  <small>{label}</small>
-                  {rainVal >= 50 && (
-                    <span className="rain-note">Heavy rain</span>
-                  )}
-                  {lowVal <= 8 && (
-                    <span className="frost-note">Frost hazard</span>
-                  )}
-                </div>
-              );
-            }
-          )}
-        </div>
-      </section>
-      <section className="weather-tasks">
-        <div className="section-heading compact">
-          <div>
-            <span className="eyebrow">Match the work</span>
-            <h2>Simple timing helps</h2>
-          </div>
-        </div>
-        <div className="task-grid">
-          <TaskCard
-            icon={Sprout}
-            title="Scout"
-            when="Today · morning"
-            text="Walk the edges and lower leaves first. Note whether symptoms are in patches or spread evenly."
-            good
-          />
-          <TaskCard
-            icon={CloudRain}
-            title="Hold off spraying"
-            when="Wednesday"
-            text="Rain is more likely. Wait for a dry window and read the label before any treatment."
-          />
-          <TaskCard
-            icon={Droplets}
-            title="Irrigate thoughtfully"
-            when="Friday"
-            text="Check soil moisture with your hand before adding water. Avoid standing water around roots."
-          />
-        </div>
-      </section>
     </main>
-  );
-}
-
-function MapPinIcon() {
-  return (
-    <span className="location-icon">
-      <Navigation size={16} />
-    </span>
-  );
-}
-function TaskCard({ icon: Icon, title, when, text, good = false }) {
-  return (
-    <div className="task-card">
-      <span className={`task-icon ${good ? "good" : ""}`}>
-        <Icon size={18} />
-      </span>
-      <span className="task-when">{when}</span>
-      <h3>{title}</h3>
-      <p>{text}</p>
-    </div>
   );
 }
 
@@ -1366,12 +1817,12 @@ function AdvisoryPage() {
     active === "All"
       ? advisoryCards
       : advisoryCards.filter(card =>
-        active === "Weather"
-          ? card.tag === "WEATHER"
-          : active === "Crop care"
-            ? card.tag === "CHILLI"
-            : card.tag === "ALL CROPS"
-      );
+          active === "Weather"
+            ? card.tag === "WEATHER"
+            : active === "Crop care"
+              ? card.tag === "CHILLI"
+              : card.tag === "ALL CROPS"
+        );
   return (
     <main className="page-width page-shell">
       <PageIntro
@@ -1497,183 +1948,93 @@ function AdvisoryPage() {
 function AboutPage() {
   return (
     <main className="page-width page-shell">
-      <PageIntro
-        eyebrow="About AGRO SATHI"
-        title="Technology should make field decisions feel lighter."
-        body="AGRO SATHI is a small, practical web companion for farmers and field teams. It brings a crop photo, local weather context and simple guidance into one calm place."
-      >
-        <div className="about-mark" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
-          <img
-            src="/agro-sathi-icon.png"
-            alt="AGRO SATHI"
-            style={{ width: "48px", height: "48px", borderRadius: "12px", display: "block" }}
-          />
-          <span
-            className="about-mark-title"
-            style={{
-              fontSize: "11px",
-              fontWeight: "800",
-              textAlign: "center",
-              letterSpacing: "0.05em",
-              color: "var(--foreground, #0f172a)",
-            }}
-          >
-            AGRO SATHI
-          </span>
-        </div>
-      </PageIntro>
-      <div className="about-story">
-        <div className="story-lead">
-          <span className="eyebrow">Our approach</span>
-          <h2>Useful beats impressive.</h2>
+      {/* Hero Section */}
+      <section className="about-hero">
+        <div className="about-hero-content">
+          <span className="eyebrow">Agro Sathi Intelligence</span>
+          <h1>Empowering the Kisan with AI</h1>
           <p>
-            We designed AGRO SATHI around three moments: noticing something
-            different in a crop, deciding what to do today, and knowing when a
-            local expert should join the decision.
+            Your digital crop doctor. We combine artificial intelligence with local agronomy to help you identify diseases instantly and take the right action.
           </p>
-          <p>
-            The result is intentionally quiet. No jargon wall. No pressure to
-            buy a product. Just a starting point that helps a farmer ask a
-            better question.
-          </p>
-        </div>
-        <div className="principle-list">
-          <div>
-            <span className="principle-number">01</span>
-            <div>
-              <h3>Start from observation</h3>
-              <p>
-                A photo is a starting point, not a verdict. Crop guides help
-                compare what you see.
-              </p>
-            </div>
-          </div>
-          <div>
-            <span className="principle-number">02</span>
-            <div>
-              <h3>Respect local context</h3>
-              <p>
-                Weather, soil, variety and crop stage change the answer. We keep
-                those questions visible.
-              </p>
-            </div>
-          </div>
-          <div>
-            <span className="principle-number">03</span>
-            <div>
-              <h3>Choose the least risky next step</h3>
-              <p>
-                Field hygiene and monitoring often belong before a chemical
-                response.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <section className="source-section">
-        <div>
-          <span className="eyebrow">Sources we point toward</span>
-          <h2>Good advice deserves a trail.</h2>
-        </div>
-        <div className="source-cards">
-          <a
-            href="https://mausam.imd.gov.in/responsive/agromet_adv_ser_state_current.php"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <CloudSun size={20} />
-            <span>
-              <b>India Meteorological Department</b>
-              <small>Agromet bulletins and forecast context</small>
-            </span>
-            <ExternalLink size={14} />
-          </a>
-          <a
-            href="https://www.fao.org/pest-and-pesticide-management/ipm/integrated-pest-management/en/"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <ShieldCheck size={20} />
-            <span>
-              <b>FAO Integrated Pest Management</b>
-              <small>Principles for sustainable pest control</small>
-            </span>
-            <ExternalLink size={14} />
-          </a>
         </div>
       </section>
-      <section className="contact-strip">
-        <div>
-          <span className="eyebrow">Have a suggestion?</span>
-          <h2>Tell us which crop should come next.</h2>
+
+      {/* The 4-Step Process (Visual Timeline) */}
+      <section className="about-timeline-section">
+        <h2>How It Works in the Field</h2>
+        <div className="about-timeline">
+          <div className="timeline-step">
+            <div className="step-icon">
+              <Eye size={24} />
+            </div>
+            <h3>1. Observe</h3>
+            <p>Notice unusual spots, pest damage, or discoloration on your crop leaves.</p>
+          </div>
+          <div className="timeline-step">
+            <div className="step-icon">
+              <Camera size={24} />
+            </div>
+            <h3>2. Snap & Upload</h3>
+            <p>Use the Agro Sathi camera tool to take a clear, close-up photo of the affected leaf.</p>
+          </div>
+          <div className="timeline-step">
+            <div className="step-icon">
+              <Brain size={24} />
+            </div>
+            <h3>3. AI Analysis</h3>
+            <p>Our smart engine processes the image against thousands of known pathology cases instantly.</p>
+          </div>
+          <div className="timeline-step">
+            <div className="step-icon">
+              <CheckCircle2 size={24} />
+            </div>
+            <h3>4. Actionable Results</h3>
+            <p>Receive a clear, single-window report with exact steps to save your yield.</p>
+          </div>
         </div>
-        <a
-          href="mailto:hello@agrosathi.example"
-          className="button button-primary"
-        >
-          Send a note <ArrowRight size={16} />
-        </a>
+      </section>
+
+      {/* What You Get (Results Breakdown) */}
+      <section className="about-features-section">
+        <h2>What You Get in Your Report</h2>
+        <div className="about-feature-grid">
+          <div className="feature-card yellow">
+            <AlertTriangle size={24} />
+            <h4>Disease & Severity</h4>
+            <p>Know exactly what disease you're fighting and how severe it is on a 1-5 scale.</p>
+          </div>
+          <div className="feature-card blue">
+            <FlaskConical size={24} />
+            <h4>Chemical Sprays</h4>
+            <p>Targeted chemical fungicide or insecticide recommendations with proper dosage.</p>
+          </div>
+          <div className="feature-card green">
+            <Sprout size={24} />
+            <h4>Organic Remedies</h4>
+            <p>Biological and safe organic alternatives like Neem Oil for sustainable farming.</p>
+          </div>
+          <div className="feature-card teal">
+            <ShieldCheck size={24} />
+            <h4>Preventative Care</h4>
+            <p>Actionable advice on soil, watering, and field hygiene to prevent the spread.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer CTA */}
+      <section className="contact-strip" style={{ marginTop: "64px" }}>
+        <div>
+          <span className="eyebrow">Ready to try?</span>
+          <h2>Scan your first crop today.</h2>
+        </div>
+        <Link href="/" className="button button-primary">
+          Open AI Camera <ArrowRight size={16} />
+        </Link>
       </section>
     </main>
   );
 }
 
-function FloatingBottomNavDock({ page, onTriggerCamera }) {
-  return (
-    <nav
-      className="floating-bottom-nav-dock"
-      aria-label="Bottom Navigation Dock"
-    >
-      <Link
-        href="/"
-        className={`dock-nav-item ${page === "home" ? "is-active" : ""}`}
-        title="Home Bento"
-        aria-label="Home"
-        onClick={() => {
-          window.dispatchEvent(new CustomEvent("agro-close-sheet"));
-        }}
-      >
-        <HomeIcon size={22} strokeWidth={2.2} />
-      </Link>
-      <Link
-        href="/mandi"
-        className={`dock-nav-item ${page === "mandi" ? "is-active" : ""}`}
-        title="Mandi Bhav"
-        aria-label="Mandi Bhav"
-      >
-        <TrendingUp size={22} strokeWidth={2.2} />
-      </Link>
-
-      {/* Center Prominent Camera Feature Button (Bigger and Distinct Vibrant Color) */}
-      <button
-        type="button"
-        className={`dock-nav-item dock-nav-camera-btn ${page === "detect" ? "is-active" : ""}`}
-        title="AI Leaf Camera & Crop Doctor"
-        aria-label="AI Leaf Camera"
-        onClick={onTriggerCamera}
-      >
-        <Camera size={26} strokeWidth={2.4} />
-      </button>
-
-      <Link
-        href="/weather"
-        className={`dock-nav-item ${page === "weather" ? "is-active" : ""}`}
-        title="5-Day Weather Desk"
-        aria-label="Weather Desk"
-      >
-        <CloudSun size={22} strokeWidth={2.2} />
-      </Link>
-      <Link
-        href="/user"
-        className={`dock-nav-item ${page === "user" ? "is-active" : ""}`}
-        title="Farmer Profile & Account"
-        aria-label="Profile and Account"
-      >
-        <User size={22} strokeWidth={2.2} />
-      </Link>
-    </nav>
-  );
-}
 
 export default function Home() {
   const [location, navigate] = useLocation();
@@ -1739,21 +2100,6 @@ export default function Home() {
       <Header page={page} />
       {content}
       <Footer />
-      {/* Bottom navigation bar visible strictly after login */}
-      {user && (
-        <FloatingBottomNavDock
-          page={page}
-          onTriggerCamera={() => {
-            if (page === "detect") {
-              const trigger = document.getElementById("detect-camera-trigger");
-              if (trigger) trigger.click();
-              else globalCameraInputRef.current?.click();
-            } else {
-              globalCameraInputRef.current?.click();
-            }
-          }}
-        />
-      )}
     </div>
   );
 }

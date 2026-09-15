@@ -26,13 +26,13 @@ export function ThemeProvider({ children }) {
       root.setAttribute("data-theme", "dark");
       document
         .querySelector('meta[name="theme-color"]')
-        ?.setAttribute("content", "#141419");
+        ?.setAttribute("content", "#1d1d1d");
     } else {
       root.classList.remove("dark");
       root.removeAttribute("data-theme");
       document
         .querySelector('meta[name="theme-color"]')
-        ?.setAttribute("content", "#1c563d");
+        ?.setAttribute("content", "#eff0eb");
     }
     try {
       localStorage.setItem("agro_sathi_theme", theme);

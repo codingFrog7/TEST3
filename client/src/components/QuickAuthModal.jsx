@@ -27,6 +27,7 @@ export default function QuickAuthModal({
     signInWithEmail,
     signUpWithEmail,
     sendPasswordReset,
+    signInAsGuest,
   } = useFirebase();
 
   const [mode, setMode] = useState(initialMode); // 'login' | 'signup' | 'forgot'
@@ -138,14 +139,17 @@ export default function QuickAuthModal({
       <div className="quick-auth-card" onClick={e => e.stopPropagation()}>
         {/* Modal Header */}
         <div className="quick-auth-header">
-          <div className="quick-auth-brand-badge" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div
+            className="quick-auth-brand-badge"
+            style={{ display: "flex", alignItems: "center", gap: "10px" }}
+          >
             <div
               style={{
                 width: "38px",
                 height: "38px",
                 borderRadius: "10px",
-                background: "#caeb80",
-                boxShadow: "0 2px 8px rgba(35, 83, 48, 0.18)",
+                background: "#B6F022",
+                boxShadow: "0 2px 10px rgba(182, 240, 34, 0.35)",
                 overflow: "hidden",
                 flexShrink: 0,
               }}
@@ -153,7 +157,12 @@ export default function QuickAuthModal({
               <img
                 src="/agro-sathi-icon.png"
                 alt="AGRO SATHI"
-                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  display: "block",
+                }}
               />
             </div>
             <div>
@@ -352,6 +361,37 @@ export default function QuickAuthModal({
               "Send Reset Link"
             )}
           </button>
+
+          {mode === "login" && (
+            <button
+              type="button"
+              onClick={() => {
+                signInAsGuest();
+                onClose();
+              }}
+              style={{
+                width: "100%",
+                marginTop: "12px",
+                padding: "12px",
+                borderRadius: "10px",
+                background: "#f1f5f9",
+                color: "#475569",
+                fontWeight: 600,
+                fontSize: "14px",
+                border: "1px solid #cbd5e1",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                transition: "background 0.2s"
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = "#e2e8f0"}
+              onMouseLeave={(e) => e.currentTarget.style.background = "#f1f5f9"}
+            >
+              <User size={16} /> Continue as Guest
+            </button>
+          )}
         </form>
 
         {/* Modal Footer Toggle */}

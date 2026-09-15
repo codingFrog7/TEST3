@@ -110,7 +110,13 @@ app.post("/api/python/diagnose", upload.single("file"), async (req: any, res: an
     const b64 = req.file.buffer.toString("base64");
     const mime = req.file.mimetype || "image/jpeg";
 
-    const MODELS = ["gemini-3.6-flash", "gemini-flash-latest", "gemini-3.8-flash", "gemini-3.5-flash"];
+    const MODELS = [
+      "gemini-3.1-flash-lite",
+      "gemini-3.5-flash-lite",
+      "gemini-1.5-flash-8b",
+      "gemini-1.5-flash",
+      "gemini-3.5-flash"
+    ];
     let report: any = null;
     let usedModel = "";
 
@@ -140,22 +146,10 @@ app.post("/api/python/diagnose", upload.single("file"), async (req: any, res: an
       }
     }
 
-    // Resilient fallback: If Gemini didn't return a report, use the ICAR Agronomy database
-    // so that the farmer always receives an accurate diagnosis without breaking
     if (!report) {
-      const fallback = generateFallbackDiagnosis("", fileName);
-      report = {
-        crop: fallback.crop,
-        disease: fallback.name,
-        confidence: fallback.confidence ? (fallback.confidence > 85 ? "high" : "medium") : "high",
-        cause: fallback.vector || fallback.simpleExplanation || "Pathogen infection favored by humid conditions.",
-        symptoms: Array.isArray(fallback.symptoms) ? fallback.symptoms.join("; ") : (fallback.symptoms || "Leaf spotting and wilting."),
-        treatment: fallback.chemicalRemedy || "Apply appropriate fungicide/insecticide per label instructions.",
-        organic_alternative: fallback.organicRemedy || "Spray pure cold-pressed Neem Oil 3000 ppm @ 5 ml/L water.",
-        prevention: fallback.culturalTips || "Maintain clean field bunds, proper plant spacing, and clean water drainage.",
-        recovery_time: "10-14 days with recommended treatment",
-        severity: fallback.severity >= 4 ? "high" : fallback.severity >= 2 ? "medium" : "low",
-      };
+      return res.status(500).json({
+        error: "AI vision analysis was unable to diagnose this photo. Please provide a clearer, well-lit crop leaf image.",
+      });
     }
 
     return res.json({
@@ -164,7 +158,7 @@ app.post("/api/python/diagnose", upload.single("file"), async (req: any, res: an
       disease: report.disease,
       confidence_label: report.confidence || "high",
       report,
-      source: usedModel ? `Google Gemini Vision AI (${usedModel})` : "ICAR Agronomy Verified Field Standard",
+      source: `Google Gemini Vision AI (${usedModel})`,
     });
   } catch (err: any) {
     console.error("/api/python/diagnose error:", err);
@@ -188,7 +182,14 @@ app.post("/api/python/ask", express.urlencoded({ extended: true }), async (req: 
 
     let answer = "";
     if (GEMINI_API_KEY) {
-      const MODELS = ["gemini-3.6-flash", "gemini-flash-latest", "gemini-3.8-flash", "gemini-3.5-flash"];
+      const MODELS = [
+        "gemini-3.5-flash",
+        "gemini-3.7-flash",
+        "gemini-3.5-flash-lite",
+        "gemini-3.1-flash-lite",
+        "gemini-3.6-flash",
+        "gemini-3.8-flash"
+      ];
       for (const model of MODELS) {
         try {
           const payload = {
@@ -555,8 +556,81 @@ You MUST respond strictly with valid JSON conforming to this schema (do NOT wrap
   "culturalTips": "Field sanitation, weed host clearing, and water management precautions."
 }`;
 
+        // ── Plant / Agriculture Image Guard (pre-flight YES/NO check) ─────────
+        // Before spending tokens on the full diagnosis, ask Gemini one quick
+        // question: "Is this a plant / crop / leaf?" → YES or NO only.
+        // Non-plant images → HTTP 422 immediately; API errors → fail-open.
+        const PLANT_CHECK_PROMPT_TS =
+          "Look at this image carefully. " +
+          "Is this image of a plant, crop, leaf, flower, tree, vegetable, fruit, " +
+          "or any kind of agricultural / botanical subject? " +
+          "Reply with ONLY a single word — YES or NO — and nothing else. " +
+          "If you see ANY plant or plant part (leaf, stem, root, flower, seed, pod, " +
+          "fruit, bark, grass, weed) reply YES. " +
+          "If the image is of a person, animal, vehicle, landscape without plants, " +
+          "food product, building, object, or anything unrelated to plants/agriculture, " +
+          "reply NO.";
+
+        let isPlantImage = true; // fail-open default
+        const GUARD_MODELS = ["gemini-3.1-flash-lite", "gemini-3.5-flash-lite", "gemini-1.5-flash-8b", "gemini-3.5-flash"];
+        const aiGuard = getGemini();
+        for (const gModel of GUARD_MODELS) {
+          try {
+            let guardAnswer = "";
+            if (aiGuard) {
+              const gRes = await aiGuard.models.generateContent({
+                model: gModel,
+                contents: {
+                  parts: [
+                    { inlineData: { mimeType: mimeType || "image/jpeg", data: cleanBase64 } },
+                    { text: PLANT_CHECK_PROMPT_TS },
+                  ],
+                },
+                config: { temperature: 0, maxOutputTokens: 5 },
+              });
+              guardAnswer = (gRes.text || "").trim().toUpperCase();
+            } else {
+              const gPayload = {
+                contents: [{
+                  parts: [
+                    { inline_data: { mime_type: mimeType || "image/jpeg", data: cleanBase64 } },
+                    { text: PLANT_CHECK_PROMPT_TS },
+                  ],
+                }],
+                generationConfig: { temperature: 0, maxOutputTokens: 5 },
+              };
+              const gData = await callGeminiRaw(gModel, gPayload);
+              guardAnswer = (gData?.candidates?.[0]?.content?.parts?.[0]?.text || "").trim().toUpperCase();
+            }
+            // Definitive answer obtained — evaluate and stop
+            isPlantImage = guardAnswer.startsWith("YES");
+            break;
+          } catch (guardErr: any) {
+            console.warn(`Plant guard model ${gModel} failed (fail-open):`, guardErr?.message);
+            // Keep isPlantImage = true (fail-open) and try next model
+          }
+        }
+
+        if (!isPlantImage) {
+          return res.status(422).json({
+            success: false,
+            notPlant: true,
+            error:
+              "This image does not appear to be a plant, crop, or leaf photo. " +
+              "Please upload a clear, close-up photo of a crop leaf, plant stem, or agricultural subject " +
+              "so Crop Doctor AI can provide an accurate diagnosis.",
+          });
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
         // Try SDK first (for AIzaSy keys), then raw fetch (for AQ. keys)
-        const MODELS = ["gemini-3.6-flash", "gemini-flash-latest", "gemini-3.8-flash", "gemini-3.5-flash"];
+        const MODELS = [
+          "gemini-3.1-flash-lite",
+          "gemini-3.5-flash-lite",
+          "gemini-1.5-flash-8b",
+          "gemini-1.5-flash",
+          "gemini-3.5-flash"
+        ];
         let parsed: any = null;
         let usedModel = "";
 
@@ -612,27 +686,20 @@ You MUST respond strictly with valid JSON conforming to this schema (do NOT wrap
             diagnosis: parsed,
           });
         } else {
-          throw new Error("All Gemini models failed");
+          throw new Error("Gemini AI models were unable to analyze this photo. Please try a clearer leaf photo.");
         }
       } catch (aiErr: any) {
-        console.warn("Gemini multimodal analysis failed or fallback used:", aiErr?.message || aiErr);
-        const fallback = generateFallbackDiagnosis(crop, fileName);
-        return res.json({
-          success: true,
-          aiResearched: false,
-          note: "Processed using ICAR Verified Agronomy Field Standards",
-          diagnosis: fallback,
+        console.warn("Gemini vision analysis failed:", aiErr?.message || aiErr);
+        return res.status(500).json({
+          success: false,
+          error: "AI diagnosis failed: " + (aiErr?.message || "Unable to analyze photo"),
         });
       }
     }
 
-    // Fallback if no Gemini key or sample test
-    const fallback = generateFallbackDiagnosis(crop, fileName);
-    return res.json({
-      success: true,
-      aiResearched: !!GEMINI_API_KEY,
-      note: "Processed using ICAR Verified Agronomy Field Standards",
-      diagnosis: fallback,
+    return res.status(400).json({
+      success: false,
+      error: "No image provided or Gemini API not configured.",
     });
   } catch (err: any) {
     console.error("Diagnosis endpoint error:", err);

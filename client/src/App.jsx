@@ -5,7 +5,6 @@ import AuthPage from "./pages/AuthPage.jsx";
 import NotFound from "./pages/NotFound.jsx";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 import { FirebaseProvider, useFirebase } from "./context/FirebaseContext.jsx";
-import { Sprout } from "lucide-react";
 
 class AppErrorBoundary extends React.Component {
   state = { hasError: false, message: "" };
@@ -44,46 +43,28 @@ function AuthLoadingScreen() {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        background: "var(--background, #f7f9f5)",
-        color: "var(--foreground, #0f172a)",
-        gap: "16px",
+        background: "var(--background, #eff0eb)",
+        padding: "24px",
       }}
     >
-      <div
-        style={{
-          width: "56px",
-          height: "56px",
-          borderRadius: "14px",
-          background: "#caeb80",
-          boxShadow: "0 8px 20px rgba(28, 86, 61, 0.22)",
-          overflow: "hidden",
-        }}
-      >
-        <img
-          src="/agro-sathi-icon.png"
-          alt="AGRO SATHI"
-          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-        />
-      </div>
-      <div style={{ textAlign: "center" }}>
-        <div
-          style={{
-            fontSize: "16px",
-            fontWeight: "800",
-            letterSpacing: "-0.01em",
-            color: "var(--foreground, #0f172a)",
-          }}
-        >
-          AGRO SATHI
+      <div className="agro-splash-card">
+        <div className="agro-splash-emblem-stage">
+          <div className="agro-splash-glow-ring" aria-hidden="true" />
+          <div className="agro-splash-orbit-ring" aria-hidden="true" />
+          <div className="agro-splash-logo-box">
+            <img
+              src="/agro-sathi-icon.png"
+              alt="AGRO SATHI"
+              className="agro-splash-logo-img"
+            />
+          </div>
         </div>
-        <div
-          style={{
-            fontSize: "12px",
-            color: "var(--muted-foreground, #64748b)",
-            marginTop: "4px",
-          }}
-        >
-          Connecting to Kisan Portal...
+        <div className="agro-splash-title">
+          <span className="part-agro">AGRO</span>
+          <span className="part-sathi">SATHI</span>
+        </div>
+        <div className="agro-splash-progress-track" aria-hidden="true">
+          <div className="agro-splash-progress-bar" style={{ width: "65%" }} />
         </div>
       </div>
     </div>

@@ -117,6 +117,7 @@ export default function ProfileDropdown({ isOpen, onClose, onOpenQuickAuth }) {
   };
 
   const handleGoogleSignInClick = async () => {
+    setGoogleError("");
     setGoogleLoading(true);
     try {
       const loggedUser = await signInWithGoogle();
@@ -124,7 +125,7 @@ export default function ProfileDropdown({ isOpen, onClose, onOpenQuickAuth }) {
         onClose();
       }
     } catch (err) {
-      console.error("Sign in failed", err);
+      setGoogleError(err?.message || "Google sign in could not be completed.");
     } finally {
       setGoogleLoading(false);
     }
@@ -546,6 +547,19 @@ export default function ProfileDropdown({ isOpen, onClose, onOpenQuickAuth }) {
                 {googleLoading ? "Signing In..." : "1-Click Google Sign In"}
               </span>
             </button>
+
+            {googleError && (
+              <div
+                className="auth-feedback-banner error"
+                style={{
+                  margin: "10px 0 0",
+                  fontSize: "12px",
+                  textAlign: "left",
+                }}
+              >
+                <span>{googleError}</span>
+              </div>
+            )}
 
             <div className="guest-action-buttons-row">
               <button

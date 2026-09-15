@@ -27,10 +27,10 @@ export default function AgroSathiLogo({
     // fallback if rendered outside provider
   }
 
-  // Strict monochrome palette: strictly Black, White, or Grey according to theme
-  const agroColor = inverted ? "#ffffff" : isDark ? "#ffffff" : "#0f172a";
-  const sathiColor = inverted ? "#cbd5e1" : isDark ? "#cbd5e1" : "#475569";
-  const taglineColor = inverted ? "#94a3b8" : isDark ? "#94a3b8" : "#64748b";
+  // Design System DNA Palette: #01520F (Evergreen), #B6F022 (Electric Lime), #EFF0EB (Porcelain), #1D1D1D (Charcoal), #64B60A (Leaf Green)
+  const agroColor = inverted ? "#ffffff" : isDark ? "#b6f022" : "#01520f";
+  const sathiColor = inverted ? "#eff0eb" : isDark ? "#eff0eb" : "#1d1d1d";
+  const taglineColor = inverted ? "#b6f022" : isDark ? "#9ca895" : "#01520f";
 
   // Dimensions mapping
   const sizeConfig = {
@@ -85,11 +85,13 @@ export default function AgroSathiLogo({
         justifyContent: "center",
         flexShrink: 0,
         borderRadius: current.badgeRadius,
-        background: "#caeb80",
-        border: "1px solid rgba(35, 83, 48, 0.18)",
+        background: "#b6f022",
+        border: isDark
+          ? "1px solid rgba(182, 240, 34, 0.3)"
+          : "1px solid rgba(1, 82, 15, 0.2)",
         boxShadow: inverted
           ? "0 2px 10px rgba(0, 0, 0, 0.45)"
-          : "0 2px 8px rgba(35, 83, 48, 0.18)",
+          : "0 2px 8px rgba(182, 240, 34, 0.35)",
         overflow: "hidden",
         transition:
           "transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease",
@@ -125,7 +127,7 @@ export default function AgroSathiLogo({
           display: "flex",
           alignItems: "baseline",
           fontFamily:
-            '"Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            '"Urbanist", "Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
           fontWeight: 800,
           fontSize: current.titleSize,
           letterSpacing: "-0.01em",
@@ -182,7 +184,8 @@ export default function AgroSathiLogo({
     userSelect: "none",
   };
 
-  const combinedClass = `${inverted ? "agro-sathi-inverted" : ""} ${className}`.trim();
+  const combinedClass =
+    `${inverted ? "agro-sathi-inverted" : ""} ${className}`.trim();
 
   if (asLink) {
     return (

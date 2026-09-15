@@ -4,13 +4,18 @@ import {
   BookmarkCheck,
   Camera,
   Check,
+  CheckCircle2,
   Copy,
   FlaskConical,
+  HelpCircle,
   History,
   ImageUp,
   Leaf,
+  Lightbulb,
   Printer,
   RotateCcw,
+  Send,
+  ShieldCheck,
   Sparkles,
   Trash2,
   Volume2,
@@ -18,9 +23,7 @@ import {
   X,
 } from "lucide-react";
 import { useFirebase } from "../context/FirebaseContext.jsx";
-import { DISEASE_DATABASE } from "../data/diseaseDatabase.js";
-import DiagnosisResultCard from "../components/DiagnosisResultCard.jsx";
-import { PYTHON_API_BASE } from "../lib/config.js";
+import DiagnosisResultModal from "../components/DiagnosisResultModal.jsx";
 
 const CROPS = [
   { id: "Chilli", label: "Chilli", icon: "🌶️" },
@@ -32,35 +35,27 @@ const CROPS = [
   { id: "Soybean", label: "Soybean", icon: "🌱" },
 ];
 
-const SAMPLE_TESTS = [
-  { label: "Chilli Curl", crop: "Chilli", data: DISEASE_DATABASE.Chilli[0] },
-  {
-    label: "Cotton Bollworm",
-    crop: "Cotton",
-    data: DISEASE_DATABASE.Cotton[0],
-  },
-  { label: "Tomato Blight", crop: "Tomato", data: DISEASE_DATABASE.Tomato[0] },
-  { label: "Rice Blight", crop: "Paddy", data: DISEASE_DATABASE.Paddy[0] },
-];
-
 export default function DetectPage() {
   const { scoutRecords, saveScoutRecord, deleteScoutRecord } = useFirebase();
 
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState("");
-  const [crop, setCrop] = useState("Chilli");
+  const [crop, setCrop] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+  const [notPlant, setNotPlant] = useState(false);
   const [busy, setBusy] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState(false);
   const [activeDiagnosis, setActiveDiagnosis] = useState(null);
+  const [showModal, setShowModal] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [copiedDosage, setCopiedDosage] = useState(false);
   const [isCameraStreaming, setIsCameraStreaming] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  // Python FastAPI Gemini Vision result
-  const [pythonResult, setPythonResult] = useState(null);
-  const [pythonLoading, setPythonLoading] = useState(false);
+  const [askQuestion, setAskQuestion] = useState("");
+  const [askAnswer, setAskAnswer] = useState("");
+  const [askLoading, setAskLoading] = useState(false);
   const [lang, setLang] = useState("en");
 
   const fileRef = useRef(null);
@@ -80,7 +75,7 @@ export default function DetectPage() {
         sessionStorage.removeItem("agro_pending_scan_name");
         setPreview(cached);
         setFile({ name: cachedName });
-        performDiagnosis("Chilli", cached, cachedName);
+        performDiagnosis("", cached, cachedName);
       }
     } catch (e) {
       console.warn(e);
@@ -137,7 +132,9 @@ export default function DetectPage() {
     const dataUrl = canvas.toDataURL("image/jpeg");
     stopLiveCamera();
     setPreview(dataUrl);
-    const snapName = crop ? `${crop.toLowerCase()}-live-scan.jpg` : "crop-live-scan.jpg";
+    const snapName = crop
+      ? `${crop.toLowerCase()}-live-scan.jpg`
+      : "crop-live-scan.jpg";
     setFile({ name: snapName });
     performDiagnosis(crop, dataUrl, snapName);
   };
@@ -156,81 +153,38 @@ export default function DetectPage() {
     reader.readAsDataURL(nextFile);
   };
 
-  const loadSample = (cropName, sampleObj) => {
-    const finalCrop = cropName || sampleObj.crop || "Chilli";
-    setCrop(finalCrop);
-    setFile({ name: `${sampleObj.id || "sample"}.jpg` });
-    setPreview(sampleObj.sampleImg || "");
-    setIsAnalyzing(true);
-    setBusy(true);
-    setResult(false);
-    setActiveDiagnosis(null);
-
-    // Realistic diagnostic response with complete verified agronomy data
-    setTimeout(() => {
-      setActiveDiagnosis({
-        ...sampleObj,
-        crop: finalCrop,
-        immediateAction:
-          sampleObj.immediateAction ||
-          sampleObj.culturalTips ||
-          "Inspect field bunds, isolate infected leaves, and prepare recommended spray immediately.",
-        localName: sampleObj.localName || sampleObj.hindiName || "",
-      });
-      setResult(true);
-      setIsAnalyzing(false);
-      setBusy(false);
-      setTimeout(() => {
-        resultRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }, 120);
-    }, 450);
-  };
-
-  // Send image to Python FastAPI /diagnose endpoint in parallel
-  const performPythonDiagnosis = async (imageBase64OrUrl, rawFile) => {
-    if (!imageBase64OrUrl) return;
-    setPythonLoading(true);
-    setPythonResult(null);
+  const handleAskQuestion = async presetQuestion => {
+    const q = (presetQuestion || askQuestion).trim();
+    if (!q) return;
+    setAskLoading(true);
+    setAskAnswer(
+      lang === "hi"
+        ? "फसल डॉक्टर सोच रहे हैं..."
+        : "Consulting Crop Doctor AI..."
+    );
     try {
-      let formData;
-      if (rawFile instanceof File) {
-        // Preferred: send the real File object as multipart
-        formData = new FormData();
-        formData.append("file", rawFile);
-      } else if (imageBase64OrUrl && imageBase64OrUrl.startsWith("data:")) {
-        // Fallback: convert base64 dataURL to a Blob
-        const [header, b64] = imageBase64OrUrl.split(",");
-        const mimeMatch = header.match(/:(.*?);/);
-        const mime = mimeMatch ? mimeMatch[1] : "image/jpeg";
-        const binary = atob(b64);
-        const arr = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
-        const blob = new Blob([arr], { type: mime });
-        formData = new FormData();
-        formData.append("file", blob, "crop-image.jpg");
-      } else {
-        return; // No image data to send
-      }
-
-      const res = await fetch(`${PYTHON_API_BASE}/diagnose`, {
+      const currentCrop = activeDiagnosis?.crop || crop || "Crop";
+      const currentDisease = activeDiagnosis?.name || "Plant Issue";
+      const prompt = `Farmer Question regarding ${currentCrop} (${currentDisease}): "${q}". Give a clear, simple, practical answer in ${lang === "hi" ? "simple Hindi" : "simple English"} suitable for an Indian farmer.`;
+      const res = await fetch("/api/python/ask", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: prompt }),
       });
-
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        console.warn("Python diagnose failed:", errJson);
-        return;
-      }
-      const json = await res.json();
-      setPythonResult(json);
+      const data = await res.json();
+      setAskAnswer(
+        data.answer ||
+        (lang === "hi" ? "कोई उत्तर नहीं मिला।" : "No answer received.")
+      );
     } catch (err) {
-      console.warn("Python backend unavailable (is uvicorn running?):", err.message);
+      console.warn("Ask error:", err);
+      setAskAnswer(
+        lang === "hi"
+          ? "परामर्श सेवा से संपर्क नहीं हो सका। कृपया पुनः प्रयास करें।"
+          : "Could not reach advisor. Please check your connection."
+      );
     } finally {
-      setPythonLoading(false);
+      setAskLoading(false);
     }
   };
 
@@ -244,12 +198,10 @@ export default function DetectPage() {
     setBusy(true);
     setResult(false);
     setActiveDiagnosis(null);
-    setPythonResult(null);
-
-    // Fire Python vision diagnosis in parallel (non-blocking)
-    if (imageBase64OrUrl) {
-      performPythonDiagnosis(imageBase64OrUrl, rawFile);
-    }
+    setErrorMsg("");
+    setNotPlant(false);
+    setAskAnswer("");
+    setAskQuestion("");
 
     try {
       const response = await fetch("/api/crop-doctor/analyze", {
@@ -261,48 +213,67 @@ export default function DetectPage() {
             imageBase64OrUrl && imageBase64OrUrl.startsWith("data:")
               ? imageBase64OrUrl
               : undefined,
-          fileName: fileName || `${cropName || "crop"}-leaf.jpg`,
+          fileName: fileName || "crop-leaf.jpg",
         }),
       });
 
       const data = await response.json();
-      if (data && data.diagnosis) {
+
+      // ── HTTP 422: Image is not a plant / crop / leaf ────────────────────
+      if (response.status === 422) {
+        setNotPlant(true);
+        setErrorMsg(
+          data?.error ||
+          "This image does not appear to be a plant, crop, or leaf photo. " +
+          "Please upload a clear photo of a crop leaf or plant so the AI can diagnose it."
+        );
+        setActiveDiagnosis(null);
+        setResult(false);
+        return; // exit early — do NOT show a modal
+      }
+
+      // ── Non-200 from server (500, 400, etc.) ────────────────────────────
+      if (!response.ok) {
+        throw new Error(
+          data?.error ||
+          data?.message ||
+          "AI was unable to analyze this image. Please try a clearer photo."
+        );
+      }
+
+      // ── Success: valid plant diagnosis ──────────────────────────────────
+      if (data && data.success && data.diagnosis) {
         setActiveDiagnosis(data.diagnosis);
         if (data.diagnosis.crop) {
           setCrop(data.diagnosis.crop);
         }
         setResult(true);
+        setShowModal(true);
+        setTimeout(() => {
+          resultRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        }, 150);
       } else {
-        throw new Error("No diagnosis returned from API");
+        throw new Error(
+          data?.error ||
+          data?.message ||
+          "AI was unable to diagnose this image. Please provide a clear, well-lit photo of an infected leaf."
+        );
       }
     } catch (err) {
-      console.warn("Using verified ICAR fallback diagnosis:", err);
-      const targetCrop = cropName || "Chilli";
-      const cropList = DISEASE_DATABASE[targetCrop] || DISEASE_DATABASE.Chilli;
-      let match = cropList[0];
-      if (fileName.includes("anthracnose") || fileName.includes("rot")) {
-        match = cropList[1] || cropList[0];
-      }
-      setActiveDiagnosis({
-        ...match,
-        crop: targetCrop,
-        immediateAction:
-          match.immediateAction ||
-          match.culturalTips ||
-          "Inspect field bunds, isolate infected leaves, and prepare recommended spray immediately.",
-        localName: match.localName || "",
-      });
-      setCrop(targetCrop);
-      setResult(true);
+      console.error("Diagnosis error:", err);
+      setNotPlant(false);
+      setErrorMsg(
+        err.message ||
+        "Failed to analyze photo. Please try uploading a clearer image."
+      );
+      setActiveDiagnosis(null);
+      setResult(false);
     } finally {
       setIsAnalyzing(false);
       setBusy(false);
-      setTimeout(() => {
-        resultRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }, 150);
     }
   };
 
@@ -371,6 +342,8 @@ Severity: Level ${activeDiagnosis.severity}/5 (${activeDiagnosis.severityLabel |
     setPreview("");
     setResult(false);
     setActiveDiagnosis(null);
+    setErrorMsg("");
+    setNotPlant(false);
     setPythonResult(null);
     if (window.speechSynthesis) window.speechSynthesis.cancel();
     setIsSpeaking(false);
@@ -414,9 +387,21 @@ Severity: Level ${activeDiagnosis.severity}/5 (${activeDiagnosis.severityLabel |
             <img
               src="/agro-sathi-icon.png"
               alt="AGRO SATHI"
-              style={{ width: "22px", height: "22px", borderRadius: "6px", display: "block" }}
+              style={{
+                width: "22px",
+                height: "22px",
+                borderRadius: "6px",
+                display: "block",
+              }}
             />
-            <span style={{ fontSize: "12px", fontWeight: "800", color: "var(--foreground, #0f172a)", letterSpacing: "0.04em" }}>
+            <span
+              style={{
+                fontSize: "12px",
+                fontWeight: "800",
+                color: "var(--foreground, #0f172a)",
+                letterSpacing: "0.04em",
+              }}
+            >
               AGRO SATHI
             </span>
           </div>
@@ -465,7 +450,7 @@ Severity: Level ${activeDiagnosis.severity}/5 (${activeDiagnosis.severityLabel |
             <div className="scanner-preview-wrap">
               <div className="scanner-preview-img-box">
                 <img src={preview} alt="Crop leaf preview" />
-                <span className="scanner-preview-tag">{crop ? `${crop} Leaf Photo` : "Crop Leaf Photo"}</span>
+                <span className="scanner-preview-tag">Uploaded Leaf Photo</span>
               </div>
               <div className="scanner-preview-actions">
                 <button
@@ -552,21 +537,6 @@ Severity: Level ${activeDiagnosis.severity}/5 (${activeDiagnosis.severityLabel |
                   }
                 }}
               />
-
-              {/* One-click demo test samples */}
-              <div className="sample-bar">
-                <span className="sample-bar-label">Or test with a sample:</span>
-                {SAMPLE_TESTS.map(s => (
-                  <button
-                    key={s.label}
-                    type="button"
-                    className="sample-chip-btn"
-                    onClick={() => loadSample(s.crop, s.data)}
-                  >
-                    <span>{s.label}</span>
-                  </button>
-                ))}
-              </div>
             </div>
           )}
 
@@ -577,8 +547,8 @@ Severity: Level ${activeDiagnosis.severity}/5 (${activeDiagnosis.severityLabel |
                 marginTop: "16px",
                 padding: "14px 18px",
                 borderRadius: "14px",
-                background: "rgba(16, 185, 129, 0.08)",
-                border: "1px solid rgba(16, 185, 129, 0.25)",
+                background: "rgba(182, 240, 34, 0.12)",
+                border: "1px solid rgba(1, 82, 15, 0.2)",
                 display: "flex",
                 alignItems: "center",
                 gap: "14px",
@@ -590,334 +560,334 @@ Severity: Level ${activeDiagnosis.severity}/5 (${activeDiagnosis.severityLabel |
                   width: "22px",
                   height: "22px",
                   borderWidth: "3px",
-                  borderColor: "#10b981",
+                  borderColor: "#01520f",
                   borderTopColor: "transparent",
                   flexShrink: 0,
                 }}
               />
               <div>
-                <strong style={{ fontSize: "14px", color: "#065f46", display: "block" }}>
+                <strong
+                  style={{
+                    fontSize: "14px",
+                    color: "#01520f",
+                    display: "block",
+                  }}
+                >
                   Analyzing crop leaf & identifying symptoms...
                 </strong>
-                <span style={{ fontSize: "12px", color: "#64748b" }}>
-                  Evaluating discoloration, spots, and pathogen damage to formulate remedies
+                <span style={{ fontSize: "12px", color: "#586256" }}>
+                  Evaluating discoloration, spots, and pathogen damage to
+                  formulate remedies
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Not-a-plant Banner (amber) — shown for HTTP 422 responses */}
+          {notPlant && errorMsg && (
+            <div
+              style={{
+                marginTop: "16px",
+                padding: "16px 18px",
+                borderRadius: "14px",
+                background: "#fffbeb",
+                border: "1.5px solid #fcd34d",
+                display: "flex",
+                alignItems: "flex-start",
+                gap: "14px",
+              }}
+            >
+              <span style={{ fontSize: "26px", flexShrink: 0, lineHeight: 1 }}>
+                🌿
+              </span>
+              <div>
+                <strong
+                  style={{
+                    fontSize: "14px",
+                    display: "block",
+                    color: "#92400e",
+                    marginBottom: "4px",
+                  }}
+                >
+                  Not a Plant or Crop Photo
+                </strong>
+                <span
+                  style={{
+                    fontSize: "12.5px",
+                    color: "#78350f",
+                    lineHeight: 1.5,
+                    display: "block",
+                  }}
+                >
+                  {errorMsg}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleScanAnother}
+                  style={{
+                    marginTop: "10px",
+                    padding: "7px 16px",
+                    borderRadius: "8px",
+                    border: "1px solid #fcd34d",
+                    background: "#ffffff",
+                    color: "#92400e",
+                    fontWeight: 700,
+                    fontSize: "12px",
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
+                  📷 Upload a Crop Photo Instead
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Generic Error Banner (red) — shown for API / technical failures */}
+          {!notPlant && errorMsg && (
+            <div
+              style={{
+                marginTop: "16px",
+                padding: "14px 18px",
+                borderRadius: "14px",
+                background: "#fef2f2",
+                border: "1px solid #fecaca",
+                display: "flex",
+                alignItems: "center",
+                gap: "14px",
+                color: "#991b1b",
+              }}
+            >
+              <AlertTriangle
+                size={22}
+                style={{ flexShrink: 0, color: "#dc2626" }}
+              />
+              <div>
+                <strong style={{ fontSize: "14px", display: "block" }}>
+                  Diagnosis Failed
+                </strong>
+                <span style={{ fontSize: "12px", color: "#b91c1c" }}>
+                  {errorMsg}
                 </span>
               </div>
             </div>
           )}
         </div>
 
-        {/* Diagnosis & Prescription Result Card */}
+        {/* Single Unified Diagnosis & Prescription Result (Matches Card 8 & 9 Flow) */}
         {result && activeDiagnosis && (
-          <article ref={resultRef} className="diagnosis-presc-card">
-            {/* Header bar */}
-            <div className="diagnosis-header-bar">
-              <div className="diagnosis-title-group">
+          <div
+            ref={resultRef}
+            style={{
+              marginTop: "24px",
+              borderRadius: "20px",
+              background: "linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)",
+              border: "1.5px solid #86efac",
+              padding: "24px",
+              boxShadow: "0 10px 25px -5px rgba(22, 163, 74, 0.08)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "16px",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                gap: "20px",
+                alignItems: "flex-start",
+                flexWrap: "wrap",
+              }}
+            >
+              {preview && (
+                <img
+                  src={preview}
+                  alt="Diagnosed crop leaf"
+                  style={{
+                    width: "110px",
+                    height: "110px",
+                    borderRadius: "14px",
+                    objectFit: "cover",
+                    border: "2px solid #bbf7d0",
+                    flexShrink: 0,
+                  }}
+                />
+              )}
+              <div style={{ flex: 1, minWidth: "240px" }}>
                 <div
                   style={{
                     display: "flex",
-                    alignItems: "center",
                     gap: "8px",
                     flexWrap: "wrap",
-                    marginBottom: "4px",
+                    marginBottom: "8px",
                   }}
                 >
                   <span
                     style={{
+                      background: "#ffffff",
+                      border: "1px solid #bbf7d0",
+                      color: "#166534",
                       fontSize: "12px",
                       fontWeight: 700,
                       padding: "3px 10px",
                       borderRadius: "999px",
-                      background:
-                        activeDiagnosis.severity >= 4
-                          ? "#fee2e2"
-                          : activeDiagnosis.severity === 3
-                            ? "#fef3c7"
-                            : "#d1fae5",
-                      color:
-                        activeDiagnosis.severity >= 4
-                          ? "#991b1b"
-                          : activeDiagnosis.severity === 3
-                            ? "#92400e"
-                            : "#065f46",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
                     }}
                   >
-                    Severity: {activeDiagnosis.severity}/5 (
-                    {activeDiagnosis.severityLabel || "Noticeable"})
+                    <Leaf size={13} /> Crop:{" "}
+                    {activeDiagnosis.crop || crop || "Identified Plant"}
                   </span>
-                  <span style={{ fontSize: "12px", color: "#64748b" }}>
-                    Crop: <strong>{activeDiagnosis.crop || crop || "Identified Crop"}</strong>
+                  <span
+                    style={{
+                      background: "#ffffff",
+                      border: "1px solid #bbf7d0",
+                      color: "#166534",
+                      fontSize: "12px",
+                      fontWeight: 700,
+                      padding: "3px 10px",
+                      borderRadius: "999px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                    }}
+                  >
+                    <ShieldCheck size={13} /> Confidence:{" "}
+                    {Math.round(activeDiagnosis.confidence || 92)}%
+                  </span>
+                  <span
+                    style={{
+                      background: "#fefce8",
+                      border: "1px solid #fef08a",
+                      color: "#a16207",
+                      fontSize: "12px",
+                      fontWeight: 700,
+                      padding: "3px 10px",
+                      borderRadius: "999px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                    }}
+                  >
+                    <AlertTriangle size={13} /> Severity:{" "}
+                    {activeDiagnosis.severity || 3}/5
                   </span>
                 </div>
-                <h2>{activeDiagnosis.name}</h2>
-                {(activeDiagnosis.localName || activeDiagnosis.hindiName || activeDiagnosis.teluguName) && (
-                  <div className="diagnosis-local-name">
-                    {activeDiagnosis.localName || activeDiagnosis.hindiName || activeDiagnosis.teluguName}
-                  </div>
-                )}
-                {activeDiagnosis.scientificName && (
-                  <div className="diagnosis-sci-name">
-                    Pathogen: {activeDiagnosis.scientificName}
-                  </div>
-                )}
-              </div>
 
-              {/* Language toggle and audio */}
-              <div className="diagnosis-top-actions">
-                <div className="lang-toggle-bar">
-                  <button
-                    type="button"
-                    className={`lang-toggle-btn ${lang === "en" ? "active" : ""}`}
-                    onClick={() => setLang("en")}
-                  >
-                    English
-                  </button>
-                  <button
-                    type="button"
-                    className={`lang-toggle-btn ${lang === "hi" ? "active" : ""}`}
-                    onClick={() => setLang("hi")}
-                  >
-                    हिंदी
-                  </button>
-                </div>
-
-                <button
-                  type="button"
-                  className={`audio-readout-btn ${isSpeaking ? "speaking" : ""}`}
-                  onClick={toggleAudioReadout}
-                  title="Listen to diagnosis"
-                >
-                  {isSpeaking ? (
-                    <>
-                      <VolumeX size={16} /> Stop
-                    </>
-                  ) : (
-                    <>
-                      <Volume2 size={16} /> Listen
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Immediate Action Banner (Next 24h) */}
-            <div
-              style={{
-                padding: "16px 18px",
-                borderRadius: "14px",
-                background: "rgba(16, 185, 129, 0.08)",
-                border: "1px solid rgba(16, 185, 129, 0.25)",
-                marginBottom: "20px",
-                display: "flex",
-                alignItems: "flex-start",
-                gap: "12px",
-              }}
-            >
-              <AlertTriangle
-                size={20}
-                className="text-amber-600"
-                style={{ flexShrink: 0, marginTop: "2px" }}
-              />
-              <div>
-                <strong
+                <h2
                   style={{
-                    display: "block",
-                    fontSize: "14px",
-                    color: "#065f46",
-                    marginBottom: "4px",
+                    margin: "0 0 4px",
+                    fontSize: "24px",
+                    fontWeight: 800,
+                    color: "#0f172a",
                   }}
                 >
-                  {lang === "hi"
-                    ? "⚡ प्राथमिक कदम (अगले 24 घंटे में करें):"
-                    : "⚡ Immediate Action (First 24 Hours):"}
-                </strong>
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: "13.5px",
-                    lineHeight: 1.5,
-                    color: "#374151",
-                  }}
-                >
-                  {lang === "hi" && (activeDiagnosis.hindiExplanation || activeDiagnosis.immediateAction)
-                    ? (activeDiagnosis.hindiExplanation || activeDiagnosis.immediateAction)
-                    : (activeDiagnosis.immediateAction ||
-                      activeDiagnosis.culturalTips ||
-                      "Inspect field bunds, isolate infected leaves, and prepare recommended spray immediately.")}
-                </p>
-              </div>
-            </div>
-
-            {/* Treatment Solutions (Organic vs Chemical) */}
-            <div className="presc-solutions-grid">
-              <div className="solution-card-box solution-organic">
-                <div className="solution-card-header">
-                  <Leaf size={18} />
-                  <span>
-                    {lang === "hi"
-                      ? "जैविक समाधान (Natural / Organic)"
-                      : "Organic & Biological Remedy"}
-                  </span>
-                </div>
-                <p>
-                  {activeDiagnosis.organicRemedy ||
-                    "Use certified neem oil spray @ 5ml/L."}
-                </p>
-              </div>
-
-              <div className="solution-card-box solution-chemical">
-                <div className="solution-card-header">
-                  <FlaskConical size={18} />
-                  <span>
-                    {lang === "hi"
-                      ? "रासायनिक छिड़काव (Chemical Spray - IPM)"
-                      : "Recommended Chemical Spray (IPM)"}
-                  </span>
-                </div>
-                <p>
-                  {activeDiagnosis.chemicalRemedy ||
-                    "Contact local Krishi Vigyan Kendra for recommended chemical dose."}
-                </p>
-              </div>
-            </div>
-
-            {/* Metrics & Guidelines */}
-            <div className="diagnosis-metrics-row">
-              {activeDiagnosis.bestSprayTime && (
-                <div className="metric-pill-box">
-                  <small>Optimal Spray Window</small>
-                  <strong>{activeDiagnosis.bestSprayTime}</strong>
-                </div>
-              )}
-              {activeDiagnosis.waterVolume && (
-                <div className="metric-pill-box">
-                  <small>Recommended Water</small>
-                  <strong>{activeDiagnosis.waterVolume}</strong>
-                </div>
-              )}
-              {activeDiagnosis.vector && (
-                <div className="metric-pill-box">
-                  <small>Carrier / Vector</small>
-                  <strong>{activeDiagnosis.vector}</strong>
-                </div>
-              )}
-            </div>
-
-            {/* Symptoms to verify */}
-            {activeDiagnosis.symptoms &&
-              activeDiagnosis.symptoms.length > 0 && (
-                <div style={{ marginBottom: "24px" }}>
-                  <h4
+                  {activeDiagnosis.disease || activeDiagnosis.name}
+                </h2>
+                {activeDiagnosis.hindiName && (
+                  <div
                     style={{
                       fontSize: "14px",
                       fontWeight: 700,
-                      margin: "0 0 10px",
-                      color: "var(--ink, #1f2937)",
+                      color: "#15803d",
+                      marginBottom: "6px",
                     }}
                   >
-                    {lang === "hi"
-                      ? "खेत में जांचने योग्य लक्षण:"
-                      : "Key Symptoms to Verify in Field:"}
-                  </h4>
-                  <ul
-                    style={{
-                      margin: 0,
-                      paddingLeft: "20px",
-                      fontSize: "13px",
-                      lineHeight: 1.6,
-                      color: "#4b5563",
-                    }}
-                  >
-                    {activeDiagnosis.symptoms.map((sym, idx) => (
-                      <li key={idx}>{sym}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+                    {activeDiagnosis.hindiName}
+                  </div>
+                )}
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: "13px",
+                    color: "#475569",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {activeDiagnosis.simpleExplanation || activeDiagnosis.cause}
+                </p>
+              </div>
 
-            {/* Farmer Action Toolbar */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: "10px",
-                flexWrap: "wrap",
-                paddingTop: "16px",
-                borderTop: "1px solid var(--line, #e2e8f0)",
-              }}
-            >
               <div
                 style={{
                   display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  flexWrap: "wrap",
+                  flexDirection: "column",
+                  gap: "10px",
+                  alignSelf: "center",
                 }}
               >
                 <button
                   type="button"
-                  className="presc-action-btn"
-                  onClick={copyDosage}
+                  onClick={() => setShowModal(true)}
+                  style={{
+                    padding: "12px 22px",
+                    borderRadius: "12px",
+                    border: "none",
+                    background: "#16a34a",
+                    color: "#ffffff",
+                    fontSize: "13.5px",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    boxShadow: "0 4px 14px rgba(22, 163, 74, 0.3)",
+                    transition: "transform 0.15s ease",
+                  }}
                 >
-                  {copiedDosage ? (
-                    <Check size={16} className="text-emerald-600" />
-                  ) : (
-                    <Copy size={16} />
-                  )}
-                  <span>{copiedDosage ? "Copied!" : "Copy Treatment"}</span>
+                  <Sparkles size={16} />
+                  <span>View Details in Pop-up</span>
                 </button>
 
                 <button
                   type="button"
-                  className="presc-action-btn"
-                  onClick={saveToFieldLog}
+                  onClick={handleScanAnother}
+                  style={{
+                    padding: "8px 16px",
+                    borderRadius: "10px",
+                    border: "1px solid #cbd5e1",
+                    background: "#ffffff",
+                    color: "#334155",
+                    fontSize: "12.5px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px",
+                  }}
                 >
-                  {savedSuccess ? (
-                    <Check size={16} className="text-emerald-600" />
-                  ) : (
-                    <BookmarkCheck size={16} />
-                  )}
-                  <span>{savedSuccess ? "Saved to Log!" : "Save to Log"}</span>
-                </button>
-
-                <button
-                  type="button"
-                  className="presc-action-btn"
-                  onClick={() => window.print()}
-                >
-                  <Printer size={16} />
-                  <span>Print Slip</span>
+                  <RotateCcw size={14} /> Retake / Scan Another
                 </button>
               </div>
-
-              <button
-                type="button"
-                className="scanner-primary-btn"
-                style={{ height: "38px", fontSize: "13px", padding: "0 16px" }}
-                onClick={handleScanAnother}
-              >
-                <RotateCcw size={15} /> Scan Another Leaf
-              </button>
             </div>
-          </article>
-        )}
-
-        {/* ── Python Gemini Vision Result Card ── */}
-        {(pythonResult || pythonLoading) && (
-          <div className="drc-wrapper" ref={null}>
-            <p className="drc-wrapper-label">🤖 Gemini Vision AI Analysis</p>
-            {pythonLoading && !pythonResult && (
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "20px", color: "#64748b", fontSize: "14px" }}>
-                <div className="spinner" />
-                Gemini is analyzing your photo…
-              </div>
-            )}
-            {pythonResult && (
-              <DiagnosisResultCard data={pythonResult} imageUrl={preview} />
-            )}
           </div>
         )}
+
+        {/* The Comprehensive Single-Window Pop-up Modal */}
+        <DiagnosisResultModal
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          activeDiagnosis={activeDiagnosis}
+          preview={preview}
+          crop={crop}
+          lang={lang}
+          setLang={setLang}
+          toggleAudioReadout={toggleAudioReadout}
+          isSpeaking={isSpeaking}
+          copyDosage={copyDosage}
+          copiedDosage={copiedDosage}
+          saveToFieldLog={saveToFieldLog}
+          savedSuccess={savedSuccess}
+          handleScanAnother={handleScanAnother}
+          askQuestion={askQuestion}
+          setAskQuestion={setAskQuestion}
+          handleAskQuestion={handleAskQuestion}
+          askAnswer={askAnswer}
+          askLoading={askLoading}
+        />
 
         {/* Saved Field Scans Log */}
         {scoutRecords.length > 0 && (
